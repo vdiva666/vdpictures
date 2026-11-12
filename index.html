@@ -219,6 +219,7 @@ textarea{min-height:64px;resize:vertical}
 .rvl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 14px;margin:0}
 .rv{min-width:0}.rv dt{font:600 10px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
 .rv dd{margin:1px 0 0;font-size:14px;overflow-wrap:anywhere}
+.rv dd.nd{color:var(--mute);opacity:.6}
 .rvw{grid-column:1/-1}.rvw dd{white-space:pre-wrap}
 .rvempty{margin:2px 0;color:var(--mute);font-size:13px}
 .tpro{display:flex;flex-direction:column}
@@ -1013,7 +1014,7 @@ function roValue(f,v){
   }
 }
 function roView(items,v){
-  const rows=items.filter(f=>f.k&&!(f.k==='equipCost'&&!['dapagare','pagato'].includes(v.equipPay))).map(f=>{const val=roValue(f,v);return val?`<div class="rv ${f.type==='textarea'||f.w?'rvw':''} ${f.cls||''}"><dt>${esc(f.l.replace(' (CHF)','').replace(' *',''))}</dt><dd>${esc(val)}</dd></div>`:''}).join('');
+  const rows=items.filter(f=>f.k&&!(f.k==='equipCost'&&!['dapagare','pagato'].includes(v.equipPay))).map(f=>{const val=roValue(f,v);return `<div class="rv ${f.type==='textarea'||f.w?'rvw':''} ${f.cls||''}"><dt>${esc(f.l.replace(' (CHF)','').replace(' *',''))}</dt><dd class="${val?'':'nd'}">${val?esc(val):'—'}</dd></div>`}).join('');
   return rows?`<dl class="rvl">${rows}</dl>`:'<p class="rvempty">Niente inserito. Tocca la matita per compilare.</p>';
 }
 function formGroups(fields,v){
