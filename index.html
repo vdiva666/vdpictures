@@ -196,7 +196,7 @@ textarea{min-height:64px;resize:vertical}
 .form{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 10px}
 .form .c2{grid-column:span 2}.form .c3{grid-column:span 3}.form .c4{grid-column:span 4}
 .sheet .form input,.sheet .form select,.sheet .form textarea{padding:6px 8px;font-size:14px}
-@media (max-width:560px){.form{grid-template-columns:repeat(2,minmax(0,1fr))}.form .c2{grid-column:span 1}.form .c3,.form .c4{grid-column:1/-1}}
+@media (max-width:560px){.form{grid-template-columns:repeat(2,minmax(0,1fr))}.form .c2,.form .c3{grid-column:span 1}.form .c4,.form .cfull{grid-column:1/-1}}
 .form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute);font-weight:500;min-width:0}
 .form .w{grid-column:1/-1}
 .form label.cb{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
@@ -255,16 +255,15 @@ textarea{min-height:64px;resize:vertical}
 .stabs .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .stabs em{font:500 11px var(--f-mono);font-style:normal;color:var(--mute)}
 .fsets [data-tab]+[data-tab]{margin-top:0}
-.tphead,.tprow{display:grid;grid-template-columns:118px 118px minmax(0,1.3fr) minmax(0,1fr) 32px;gap:6px;align-items:center}
+.tphead,.tprow{display:grid;grid-template-columns:78px 78px minmax(0,1.3fr) minmax(0,1fr) 32px;gap:6px;align-items:center}
 .tphead{font:600 10px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
 .tprow{margin-bottom:6px}
 .tprow input,.tprow select{padding:6px 8px;font-size:14px;background:var(--surface)}
-.tm{display:flex;align-items:center;gap:3px}.tm select{-webkit-appearance:none;appearance:none;width:auto;flex:1;min-width:0;padding:6px 4px;text-align:center;text-align-last:center;font:600 16px/1.2 var(--f-body);font-variant-numeric:tabular-nums;letter-spacing:.02em;color:var(--ink);cursor:pointer}
-.tm b{color:var(--ink);font:600 16px var(--f-body)}
+.tm{-webkit-appearance:none;appearance:none;width:100%;min-width:0;padding:6px 2px;text-align:center;text-align-last:center;font:600 16px/1.2 var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink);background:var(--surface);cursor:pointer}
 .tpa{display:flex;flex-direction:column;gap:4px;min-width:0}
 .tprow .x{width:32px;height:32px}
 .tpact{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px}
-@media (max-width:560px){.tphead{display:none}.tprow{grid-template-columns:1fr 1fr 32px;padding-bottom:8px;border-bottom:1px solid var(--line)}.tprow .tpa{grid-column:1/3;grid-row:2}.tprow .tp-n{grid-column:1/3;grid-row:3}.tprow .tp-x{grid-row:1;grid-column:3}}
+@media (max-width:600px){.tphead{display:none}.tphead,.tprow{grid-template-columns:62px 62px minmax(0,1.25fr) minmax(0,1fr) 24px;gap:3px}.tprow{margin-bottom:4px;padding:0;border:0}.tprow .tp-a,.tprow .tp-asel,.tprow .tp-n{padding:5px 5px}.tprow .x{width:24px;height:28px;font-size:15px}.tm{padding:5px 0}}
 .fsets{display:flex;flex-direction:column;gap:14px}
 .fs{margin:0;min-width:0;border:1px solid var(--line);border-radius:var(--r);background:var(--raise);padding:12px 12px 14px}
 .fs legend{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:2px 10px}
@@ -389,8 +388,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .form{gap:7px}
   .form label{font-size:11px;gap:2px}
   .sheet .form input,.sheet .form select,.sheet .form textarea{padding:5px 7px}
-  .tprow{margin-bottom:4px;padding-bottom:6px;gap:4px}
-  .tm select{padding:4px 2px}
   .locnew,.supnew{padding:9px;gap:6px}
   .sub{margin-top:12px}
 }
@@ -991,7 +988,7 @@ function field(f,v){
       <div class="supnew-a"><button class="btn ghost" type="button" id="locNewCancel">Annulla</button><button class="btn" type="button" id="locNewBtn">Crea e seleziona</button></div>
     </div>`}
   if(f.type==='delivery'){const asap=v==='asap',d=field._rec?.deliveryDate||'';
-    return `<label class="c${f.span||3}" for="f_deliveryMode">Consegna<span class="dl2"><select id="f_deliveryMode" name="deliveryMode"><option value="data" ${asap?'':'selected'}>Giorno specifico</option><option value="asap" ${asap?'selected':''}>ASAP</option></select><input id="f_deliveryDate" name="deliveryDate" type="date" value="${esc(d)}" aria-label="Data di consegna" ${asap?'hidden':''}></span></label>`}
+    return `<label class="c${f.span||3} cfull" for="f_deliveryMode">Consegna<span class="dl2"><select id="f_deliveryMode" name="deliveryMode"><option value="data" ${asap?'':'selected'}>Data</option><option value="asap" ${asap?'selected':''}>ASAP</option></select><input id="f_deliveryDate" name="deliveryDate" type="date" value="${esc(d)}" aria-label="Data di consegna" ${asap?'hidden':''}></span></label>`}
   const id='f_'+f.k,rq=f.req?'required':'';
   let inp;
   if(f.type==='textarea')inp=`<textarea id="${id}" name="${f.k}" ${f.ph?`placeholder="${esc(f.ph)}"`:''}>${esc(v)}</textarea>`;
@@ -1134,15 +1131,13 @@ function toggleWho(k){
   $('#crewSum').textContent=crewSummary(c);
 }
 const TP_PRESETS=['Inizio giornata','Fine giornata'];
+const TIMES=(()=>{const a=[];for(let h=0;h<24;h++)for(let m=0;m<60;m+=10)a.push(pad(h)+':'+pad(m));return a})();
 function timeSel(v,cls,lab){
-  const [h,m]=(v||'').split(':');
-  const hs=['<option value="">--</option>'].concat([...Array(24)].map((_,i)=>{const x=pad(i);return `<option ${x===h?'selected':''}>${x}</option>`})).join('');
-  const mins=['00','10','20','30','40','50'];if(m&&!mins.includes(m))mins.push(m),mins.sort();
-  const ms=mins.map(x=>`<option ${x===(m||'00')?'selected':''}>${x}</option>`).join('');
-  return `<span class="tm ${cls}" role="group" aria-label="${lab}"><select class="tm-h" aria-label="${lab}: ore">${hs}</select><b>:</b><select class="tm-m" aria-label="${lab}: minuti">${ms}</select></span>`;
+  const extra=v&&!TIMES.includes(v)?`<option selected>${esc(v)}</option>`:'';
+  return `<select class="tm ${cls}" aria-label="${lab}"><option value="">--:--</option>${extra}${TIMES.map(t=>`<option ${t===v?'selected':''}>${t}</option>`).join('')}</select>`;
 }
-const tmVal=el=>{const h=el.querySelector('.tm-h').value;return h?h+':'+el.querySelector('.tm-m').value:''};
-function tmSet(el,v){const [h,m]=(v||'').split(':');el.querySelector('.tm-h').value=h||'';const ms=el.querySelector('.tm-m');if(m&&![...ms.options].some(o=>o.value===m))ms.add(new Option(m,m));ms.value=m||'00'}
+const tmVal=el=>el.value;
+function tmSet(el,v){if(v&&![...el.options].some(o=>o.value===v))el.add(new Option(v,v));el.value=v||''}
 function tpRows(rows){
   return rows.map((r,i)=>{const pre=TP_PRESETS.includes(r.a),other=!!r.a&&!pre;
     return `<div class="tprow" data-i="${i}">
@@ -1255,7 +1250,7 @@ document.addEventListener('click',async e=>{
   if(t.id==='locNewBtn'){createLocation();return}
   if(t.id==='locNewCancel'){$('#locNew').hidden=true;$('#f_locSel').value='';return}
   if(t.dataset.stab){showTab(t.dataset.stab);return}
-  if(t.id==='tpAdd'){const r=readTP(true);const last=r[r.length-1];r.push({s:last?.e||'',e:'',a:'',n:''});$('#tpRows').innerHTML=tpRows(r);const lr=$('#tpRows .tprow:last-child');(r[r.length-1].s?lr.querySelector('.tp-asel'):lr.querySelector('.tm-h')).focus();return}
+  if(t.id==='tpAdd'){const r=readTP(true);const last=r[r.length-1];r.push({s:last?.e||'',e:'',a:'',n:''});$('#tpRows').innerHTML=tpRows(r);const lr=$('#tpRows .tprow:last-child');(r[r.length-1].s?lr.querySelector('.tp-asel'):lr.querySelector('.tp-s')).focus();return}
   if(t.dataset.tprm!==undefined&&t.hasAttribute('data-tprm')){const r=readTP(true);r.splice(+t.closest('.tprow').dataset.i,1);$('#tpRows').innerHTML=tpRows(r.length?r:[{s:'',e:'',a:'',n:''}]);return}
   if(t.id==='tpSort'){$('#tpRows').innerHTML=tpRows(sortTP(readTP()).concat([]).length?sortTP(readTP()):[{s:'',e:'',a:'',n:''}]);return}
   if(t.id==='tpPdf'||t.id==='pvSave'){makeTimePlanPDF(t);return}
@@ -1317,7 +1312,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='f_clientId'){const n=e.target.value==='__new';$('#cliNew').hidden=!n;if(n)$('#cliNewCompany').focus();return}
   if(e.target.id==='f_locSel'){const n=e.target.value==='__new';$('#locNew').hidden=!n;if(n)$('#locNewName').focus();return}
   if(e.target.classList.contains('tp-asel')){const inp=e.target.parentNode.querySelector('.tp-a');const o=e.target.value==='__altro';inp.hidden=!o;e.target.hidden=o;if(o){inp.value='';inp.focus()}return}
-  if(e.target.closest('.tp-e')){const row=e.target.closest('.tprow');const v=tmVal(e.target.closest('.tp-e'));if(e.target.classList.contains('tm-h')&&v&&e.target.closest('.tp-e').querySelector('.tm-m').value==='')tmSet(e.target.closest('.tp-e'),v);const next=row.nextElementSibling;if(next&&v)tmSet(next.querySelector('.tp-s'),v);return}if(e.target.id==='f_equipPay'){$('#shForm').classList.toggle('no-cost',!['dapagare','pagato'].includes(e.target.value));return}
+  if(e.target.classList.contains('tp-e')){const row=e.target.closest('.tprow');const v=e.target.value;const next=row.nextElementSibling;if(next&&v)tmSet(next.querySelector('.tp-s'),v);return}
   if(e.target.id==='supAdd'){const v=e.target.value;if(v==='__new'){$('#supNew').hidden=false;e.target.value='';$('#supNewName').focus()}else if(v){sheet.sup.push(v);refreshPicker()}return}
   if(e.target.id==='f_deliveryMode'){const d=$('#f_deliveryDate');d.hidden=e.target.value==='asap';if(!d.hidden)d.focus()}
   if(e.target.id==='f_kind'){const t=$('#f_type');if(t)t.innerHTML=typeOpts(e.target.value,'');const g=e.target.value==='grafica';$('.sheet').classList.toggle('no-eq',g);if(g&&$('.sheet [data-stab="attrezzatura"][aria-selected="true"],.sheet [data-stab="timeplan"][aria-selected="true"]'))showTab('lavoro')}});
