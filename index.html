@@ -320,6 +320,7 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding-top:16px;display
 .login-card{width:min(380px,100%);display:flex;flex-direction:column;gap:12px}
 .login-card label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute);font-weight:500}
 .login-logo{width:100%;height:auto;margin-bottom:18px;filter:var(--logo-filter)}
+.pwrow{display:flex;gap:6px}.pwrow input{flex:1}.pwrow .btn{padding:6px 12px;font-size:13px}
 .login-err{color:var(--bad);min-height:1.2em;font-size:14px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:60;max-width:calc(100vw - 32px)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
@@ -433,8 +434,8 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding-top:16px;display
 <div id="sblogin" class="login" hidden>
   <form id="sbForm" class="login-card" autocomplete="on">
     <img class="login-logo" src="" alt="VD Pictures" id="loginLogo">
-    <label for="sbEmail">Email<input id="sbEmail" type="email" autocomplete="username" required></label>
-    <label for="sbPass">Password<input id="sbPass" type="password" autocomplete="current-password" required></label>
+    <label for="sbEmail">Email<input id="sbEmail" type="email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email" required></label>
+    <label for="sbPass">Password<span class="pwrow"><input id="sbPass" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required><button type="button" class="btn ghost" id="pwToggle" aria-label="Mostra password">Mostra</button></span></label>
     <div class="login-err" id="sbErr" role="alert"></div>
     <button class="btn" id="sbBtn" type="submit">Accedi</button>
   </form>
@@ -1330,11 +1331,12 @@ async function startSession(){
 })();
 $('#sbForm').addEventListener('submit',async e=>{
   e.preventDefault();const btn=$('#sbBtn');btn.disabled=true;$('#sbErr').textContent='';
-  const {error}=await sb.auth.signInWithPassword({email:$('#sbEmail').value.trim(),password:$('#sbPass').value});
+  const {error}=await sb.auth.signInWithPassword({email:$('#sbEmail').value.trim().toLowerCase(),password:$('#sbPass').value});
   btn.disabled=false;
-  if(error){$('#sbErr').textContent=/invalid/i.test(error.message)?'Email o password non corrette.':'Accesso non riuscito: '+error.message;return}
+  if(error){$('#sbErr').textContent=/not confirmed/i.test(error.message)?'Account non ancora confermato: in Supabase spunta "Auto Confirm User" o conferma l’utente.':/invalid/i.test(error.message)?'Email o password non corrette. Usa “Mostra” per controllare cosa hai scritto.':'Accesso non riuscito: '+error.message;return}
   $('#sbPass').value='';startSession();
 });
+$('#pwToggle').addEventListener('click',()=>{const i=$('#sbPass');const show=i.type==='password';i.type=show?'text':'password';$('#pwToggle').textContent=show?'Nascondi':'Mostra'});
 $('#logoutBtn').addEventListener('click',async()=>{if(channel)sb.removeChannel(channel);await sb.auth.signOut();S.clients=[];S.productions=[];S.tasks=[];S.suppliers=[];renderAll()});
 </script>
 </body>
