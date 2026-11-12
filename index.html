@@ -1154,7 +1154,7 @@ async function submitSheet(){
     else if(f.type==='number')data[f.k]=el.value===''?null:Number(el.value);
     else data[f.k]=el.value.trim();}
   for(const f of spec.fields)if(f.k&&f.req&&!data[f.k]){toast('Compila: '+f.l);if(col==='productions')showTab('lavoro');fm.elements[f.k].focus();return}
-  if(col==='productions'&&!['dapagare','pagato'].includes(data.equipPay))data.equipCost=null;
+  if(col==='productions'&&data.equipPay==='cliente')data.equipCost=null;
   if(col==='productions'){const prev=id?byId(S.productions,id):null;if(!id||kindOf(prev)!==data.kind)data.code=nextCode(data.kind)}
   if(col==='tasks'){const prev=id?byId(S.tasks,id):null;if(data.done&&!(prev&&prev.done))data.doneAt=new Date().toISOString();if(!data.done)data.doneAt=null}
   if(col==='productions'&&$('#tpRows'))data.timePlan=data.kind==='grafica'?(byId(S.productions,id)?.timePlan||[]):sortTP(readTP());
