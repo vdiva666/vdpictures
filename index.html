@@ -709,7 +709,7 @@ function renderDash(){
   $('#agenda').innerHTML=items.length?items.slice(0,14).map(it=>{
     const dt=new Date(it.d+'T12:00:00');
     return `<div class="ag ${it.late?'late':''}" data-open="${it.o}" role="button" tabindex="0">
-      <div class="d">${it.asap?'Prima<b>ASAP</b>possibile':`${esc(dt.toLocaleDateString('it-CH',{weekday:'short'}))}<b>${dt.getDate()}</b>${esc(dt.toLocaleDateString('it-CH',{month:'short'}))}`}</div>
+      <div class="d">${it.asap?'<b>ASAP</b>':`${esc(dt.toLocaleDateString('it-CH',{weekday:'short'}))}<b>${dt.getDate()}</b>${esc(dt.toLocaleDateString('it-CH',{month:'short'}))}`}</div>
       <div style="min-width:0"><div class="k" style="--c:${it.c}">${esc(it.k)}</div><div class="t">${esc(it.t)}</div>${it.s?`<div class="s" style="font-size:13px;color:var(--mute)">${esc(it.s)}</div>`:''}</div></div>`}).join('')
     :`<div class="empty">Nessuna ripresa, consegna o scadenza nelle prossime due settimane.</div>`;
 
