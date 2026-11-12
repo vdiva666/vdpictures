@@ -179,8 +179,11 @@ input,select,textarea{background:var(--raise);border:1px solid var(--line);borde
 input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 textarea{min-height:64px;resize:vertical}
 
-.quick{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) 150px minmax(0,1fr) auto;gap:8px;margin-bottom:16px}
-@media (max-width:820px){.quick{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.quick input:first-child{grid-column:1/-1}}
+.quick{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) 150px 130px auto;gap:8px;margin-bottom:16px;align-items:end}
+.qdue{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--mute);min-width:0}
+.qdue span{display:none}
+.qdue input{min-height:36px;width:100%}
+@media (max-width:820px){.quick{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.quick>input:first-child,.quick>select#qProd{grid-column:1/-1}.quick>button{grid-column:1/-1}.qdue span{display:block}}
 
 /* Sheet */
 .shade{position:fixed;inset:0;background:var(--shade);z-index:40}
@@ -510,8 +513,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <form class="quick" id="quick" autocomplete="off">
       <input id="qTitle" placeholder="Nuova attività, es. Inviare preventivo" aria-label="Titolo attività" required>
       <select id="qProd" aria-label="Produzione"></select>
-      <input id="qDue" type="date" aria-label="Scadenza">
-      <input id="qWho" list="people" placeholder="Chi" aria-label="Assegnata a">
+      <label class="qdue" for="qDue"><span>Scadenza</span><input id="qDue" type="date"></label>
+      <select id="qWho" aria-label="Chi"><option value="">Chi?</option><option>Matteo</option><option>Kia</option><option>Matteo / Kia</option></select>
       <button class="btn" type="submit">Aggiungi</button>
     </form>
     <div class="box" id="tList"></div>
@@ -675,7 +678,7 @@ function taskRow(t,showProd=true){
   const meta=[];
   if(showProd&&p)meta.push(`<button class="lnk" data-open="productions:${p.id}">${esc(prodLabel(p))}</button>`);
   if(t.due)meta.push(`<span class="due ${late?'late':''}">${t.due===today?'Oggi':esc(fmtDW(t.due))}</span>`);
-  if(t.assignee)meta.push(`<span>${esc(t.assignee)}</span>`);
+  if(t.assignee){const ks=t.assignee==='Matteo'?['matteo']:t.assignee==='Kia'?['kia']:t.assignee==='Matteo / Kia'?['matteo','kia']:null;meta.push(ks?crewDots(ks):`<span>${esc(t.assignee)}</span>`)}
   if(t.done&&t.doneAt)meta.push(`<span>Fatta il ${esc(fmtD(t.doneAt.slice(0,10)))}</span>`);
   return `<div class="row ${t.done?'done':''}">
     <button class="chk ${t.done?'on':''}" data-toggle="${t.id}" aria-label="${t.done?'Segna da fare':'Segna come fatta'}: ${esc(t.title)}"></button>
@@ -958,7 +961,7 @@ const SPEC={
   tasks:{title:'attività',fields:[
     {k:'title',l:'Cosa fare',req:1,w:1},
     {k:'productionId',l:'Produzione',type:'prod',w:1},
-    {k:'due',l:'Scadenza',type:'date'},{k:'assignee',l:'Chi',list:'people'},
+    {k:'due',l:'Scadenza',type:'date'},{k:'assignee',l:'Chi',type:'who'},
     {k:'notes',l:'Note',type:'textarea',w:1},
     {k:'done',l:'Fatta',type:'check',w:1}]}
 };
@@ -1048,6 +1051,7 @@ function field(f,v){
   if(f.type==='textarea')inp=`<textarea id="${id}" name="${f.k}" ${f.ph?`placeholder="${esc(f.ph)}"`:''}>${esc(v)}</textarea>`;
   else if(f.type==='select')inp=`<select id="${id}" name="${f.k}"><option value=""></option>${f.opts.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
   else if(f.type==='equip')inp=`<select id="${id}" name="${f.k}">${EQUIP.map(e=>`<option value="${e.k}" ${e.k===(v||'')?'selected':''}>${esc(e.l)}</option>`).join('')}</select>`;
+  else if(f.type==='who')inp=`<select id="${id}" name="${f.k}"><option value="">—</option>${['Matteo','Kia','Matteo / Kia'].concat(v&&!['Matteo','Kia','Matteo / Kia'].includes(v)?[v]:[]).map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
   else if(f.type==='eqpay')inp=`<select id="${id}" name="${f.k}">${EQPAY.map(e=>`<option value="${e.k}" ${e.k===(v||'')?'selected':''}>${esc(e.l)}</option>`).join('')}</select>`;
   else if(f.type==='kind')inp=`<select id="${id}" name="${f.k}">${Object.entries(KIND).map(([k,o])=>`<option value="${k}" ${k===(v||'video')?'selected':''}>${o.l}</option>`).join('')}</select>`;
   else if(f.type==='ptype')inp=`<select id="${id}" name="${f.k}">${typeOpts(field._kind,v)}</select>`;
@@ -1360,7 +1364,7 @@ document.addEventListener('submit',async e=>{
   if(e.target.id==='sForm'){saveSupplierInline();return}
   if(e.target.id==='quick'){
     const title=$('#qTitle').value.trim();if(!title)return;
-    const r=await saveDoc('tasks',null,{title,productionId:$('#qProd').value,due:$('#qDue').value,assignee:$('#qWho').value.trim(),done:false,doneAt:null,notes:''});
+    const r=await saveDoc('tasks',null,{title,productionId:$('#qProd').value,due:$('#qDue').value,assignee:$('#qWho').value,done:false,doneAt:null,notes:''});
     if(r){$('#qTitle').value='';$('#qDue').value='';$('#qTitle').focus();toast('Attività aggiunta')}
     return}
   if(e.target.id==='subQuick'){
