@@ -1286,8 +1286,8 @@ async function clearSamples(btn){
 const allReady=()=>S.ready.clients&&S.ready.productions&&S.ready.tasks&&S.ready.suppliers;
 var initDone=false;
 /* ---------- Supabase ---------- */
-const SB_URL='__SUPABASE_URL__';
-const SB_KEY='__SUPABASE_PUBLISHABLE_KEY__';
+const SB_URL='https://wgwamhrvybkxpqmacgwk.supabase.co';
+const SB_KEY='sb_publishable_agPjXw7UJjXkC2ZnSaVjKg_R9qv5w7E';
 let sb=null,channel=null;
 function showLogin(msg){$('#sblogin').hidden=false;$('#sbErr').textContent=msg||'';setTimeout(()=>$('#sbEmail').focus(),30)}
 function hideLogin(){$('#sblogin').hidden=true}
