@@ -223,8 +223,8 @@ textarea{min-height:64px;resize:vertical}
 .rvw{grid-column:1/-1}.rvw dd{white-space:pre-wrap}
 .rvempty{margin:2px 0;color:var(--mute);font-size:13px}
 .tpro{display:flex;flex-direction:column}
-.tpr{display:grid;grid-template-columns:94px minmax(0,1fr) minmax(0,1fr);gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
-.tpr:first-child{border-top:0}.tpr b{font-variant-numeric:tabular-nums}.tpr em{font-style:normal;color:var(--mute);font-size:13px}
+.tpr{display:grid;grid-template-columns:max-content minmax(0,1fr) minmax(0,1fr);gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.tpr:first-child{border-top:0}.tpr b{font-variant-numeric:tabular-nums;white-space:nowrap;min-width:84px}.tpr em{font-style:normal;color:var(--mute);font-size:13px}
 .tpadd{margin-top:6px}
 .sheet:not(.is-editing) .ed{display:none}
 .sheet.is-editing .rd{display:none}
@@ -418,7 +418,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .sheet{font-size:13px}
   .rv dd,.tpr{font-size:13px}
   .rvl{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
-  .tpr{grid-template-columns:76px minmax(0,1fr) minmax(0,.9fr);gap:6px;padding:4px 0}
+  .tpr{grid-template-columns:max-content minmax(0,1fr) minmax(0,.9fr);gap:8px;padding:4px 0}
+  .tpr b{min-width:0;font-size:12.5px}
   .pen{width:26px;height:26px;right:6px}
   .sheet .form input,.sheet .form select{height:30px}
 }
