@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>VD Pictures</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#1a1a1a">
@@ -209,6 +209,24 @@ textarea{min-height:64px;resize:vertical}
 .form label.cb input{width:auto}
 .sub{margin-top:18px}
 .fs-tp{margin-top:0}
+.fs{position:relative}
+.pen{position:absolute;top:-2px;right:8px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--mute);display:grid;place-items:center;cursor:pointer;padding:0}
+.pen:hover{color:var(--accent);border-color:var(--accent)}
+.fs.editing .pen{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.fs:not(.editing)>.form,.fs:not(.editing)>.tpedit{display:none}
+.fs.editing>.roview{display:none}
+.roview{padding-top:2px}
+.rvl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 14px;margin:0}
+.rv{min-width:0}.rv dt{font:600 10px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.rv dd{margin:1px 0 0;font-size:14px;overflow-wrap:anywhere}
+.rvw{grid-column:1/-1}.rvw dd{white-space:pre-wrap}
+.rvempty{margin:2px 0;color:var(--mute);font-size:13px}
+.tpro{display:flex;flex-direction:column}
+.tpr{display:grid;grid-template-columns:94px minmax(0,1fr) minmax(0,1fr);gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.tpr:first-child{border-top:0}.tpr b{font-variant-numeric:tabular-nums}.tpr em{font-style:normal;color:var(--mute);font-size:13px}
+.tpadd{margin-top:6px}
+.sheet:not(.is-editing) .ed{display:none}
+.sheet.is-editing .rd{display:none}
 .pvwrap{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.72);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .pvbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border-bottom:1px solid var(--line);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
 .pvscroll{flex:1;overflow:auto;padding:24px 16px}
@@ -329,7 +347,7 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding-top:16px;display
 .login-err{color:var(--bad);min-height:1.2em;font-size:14px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:60;max-width:calc(100vw - 32px)}
 /* telefoni: campi a 16px, così Safari non ingrandisce la pagina quando li tocchi */
-@media (pointer:coarse),(max-width:820px){input,select,textarea,.sheet .form input,.sheet .form select,.sheet .form textarea,.tprow input,.tprow select,.tm select{font-size:16px!important}}
+@media (max-width:600px){input,select,textarea,.sheet .form input,.sheet .form select,.sheet .form textarea,.tprow input,.tprow select,.tm{font-size:13px!important}}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
 
@@ -396,6 +414,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .sheet .form input,.sheet .form select,.sheet .form textarea{padding:5px 7px}
   .locnew,.supnew{padding:9px;gap:6px}
   .sub{margin-top:12px}
+  .sheet{font-size:13px}
+  .rv dd,.tpr{font-size:13px}
+  .rvl{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+  .tpr{grid-template-columns:76px minmax(0,1fr) minmax(0,.9fr);gap:6px;padding:4px 0}
+  .pen{width:26px;height:26px;right:6px}
+  .sheet .form input,.sheet .form select{height:30px}
 }
 </style>
 
@@ -971,12 +995,34 @@ async function createLocation(){
   toast('Location creata e selezionata (anche in Rubrica › Fornitori)');return id;
 }
 const locLabel=x=>[x.name,[x.address,x.city].filter(Boolean).join(', ')].filter(Boolean).join(' – ');
+function roValue(f,v){
+  const x=v[f.k];
+  switch(f.type){
+    case 'kind':return KIND[kindOf(v)].l;
+    case 'client':return clientName(x);
+    case 'status':return x?stLabel(x,kindOf(v)):'';
+    case 'number':return x||x===0?(f.k==='amount'||f.k==='equipCost'?money(x):String(x)):'';
+    case 'date':return x?fmtDW(x):'';
+    case 'delivery':return isAsap(v)?'ASAP':(v.deliveryDate?fmtDW(v.deliveryDate):'');
+    case 'location':{const sp=v.locationSupplierId&&byId(S.suppliers,v.locationSupplierId);return sp?locLabel(sp):(v.location||'')}
+    case 'equip':return x?EQ[x]?.l||'':'';
+    case 'eqpay':return x?(EQPAY.find(e=>e.k===x)||{}).l||'':'';
+    case 'suppliers':return (x||[]).map(supName).filter(Boolean).join(', ');
+    case 'check':return x?'Sì':'';
+    default:return x==null?'':String(x);
+  }
+}
+function roView(items,v){
+  const rows=items.filter(f=>f.k&&!(f.k==='equipCost'&&!['dapagare','pagato'].includes(v.equipPay))).map(f=>{const val=roValue(f,v);return val?`<div class="rv ${f.type==='textarea'||f.w?'rvw':''} ${f.cls||''}"><dt>${esc(f.l.replace(' (CHF)','').replace(' *',''))}</dt><dd>${esc(val)}</dd></div>`:''}).join('');
+  return rows?`<dl class="rvl">${rows}</dl>`:'<p class="rvempty">Niente inserito. Tocca la matita per compilare.</p>';
+}
 function formGroups(fields,v){
   const groups=[];let g={l:'',cls:'',items:[]};
   for(const f of fields){if(f.type==='hd'){if(g.items.length||g.l)groups.push(g);g={l:f.l,cls:f.cls||'',tab:f.tab,items:[]}}else g.items.push(f)}
   groups.push(g);
   if(groups.length===1&&!groups[0].l)return `<div class="form">${g.items.map(f=>field(f,v[f.k])).join('')}</div>`;
-  return `<div class="fsets">${groups.map(x=>`<fieldset class="fs ${x.cls} ${x.cls?'fs-'+x.cls:''}" data-tab="${x.tab||'lavoro'}"><legend>${esc(x.l)}</legend><div class="form">${x.items.map(f=>field(f,v[f.k])).join('')}</div></fieldset>`).join('')}</div>`;
+  const ro=formGroups.ro;
+  return `<div class="fsets">${groups.map(x=>`<fieldset class="fs ${x.cls} ${x.cls?'fs-'+x.cls:''} ${ro?'':'editing'}" data-tab="${x.tab||'lavoro'}"><legend>${esc(x.l)}</legend>${ro?`<button type="button" class="pen" data-pen aria-label="Modifica ${esc(x.l)}" title="Modifica"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z M13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><div class="roview">${roView(x.items,v)}</div>`:''}<div class="form">${x.items.map(f=>field(f,v[f.k])).join('')}</div></fieldset>`).join('')}</div>`;
 }
 function typeOpts(kind,v){const list=TYPES[kind||'video'];return `<option value=""></option>`+list.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')+(v&&!list.includes(v)?`<option selected>${esc(v)}</option>`:'')}
 function field(f,v){
@@ -1050,6 +1096,7 @@ function openSheet(col,id,preset={},back=null){
   sheet={col,id,back};if(col==='productions'){v.kind=kindOf(v);field._kind=v.kind;field._rec=v;sheet.sup=(v.equipSuppliers||[]).slice();sheet.crew=(v.crew||[]).slice()}
   let head=id?(col==='productions'?esc(v.title):col==='clients'?esc(v.company||v.name):esc(v.title)):'Nuov'+(col==='clients'?'o ':'a ')+spec.title;
   let kicker=col==='productions'?(v.code||nextCode(v.kind)):spec.title;
+  formGroups.ro=col==='productions'&&!!id&&!readOnly===true?true:(col==='productions'&&!!id);
   let extra=col==='productions'?tpBlock(v.timePlan||[]):'';
   if(id&&col==='productions'){
     const ts=S.tasks.filter(t=>t.productionId===id).sort((a,b)=>(a.done-b.done)||taskSort(a,b));
@@ -1073,17 +1120,19 @@ function openSheet(col,id,preset={},back=null){
       <button type="button" role="tab" class="eq" data-stab="attrezzatura">Attrezzatura</button>
       <button type="button" role="tab" class="eq" data-stab="timeplan">Time plan${(v.timePlan||[]).length?` <em>${v.timePlan.length}</em>`:''}</button></div></div>`:''}
     <div class="sb">
-      <form id="shForm" novalidate autocomplete="off" class="${col==='productions'&&!['dapagare','pagato'].includes(v.equipPay||'')?'no-cost':''}">${formGroups(spec.fields,v)}</form>
+      <form id="shForm" novalidate autocomplete="off" class="${col==='productions'&&!['dapagare','pagato'].includes(v.equipPay||'')?'no-cost':''}">${formGroups(spec.fields,v)}</form>${(formGroups.ro=false,'')}
       ${extra}
     </div>
     <div class="sf">
-      <div>${id?`<button class="btn danger" id="delBtn" type="button">Elimina</button>`:''}</div>
-      <div class="btns"><button class="btn ghost" type="button" data-close>Annulla</button><button class="btn" type="submit" form="shForm" ${readOnly?'disabled':''}>${id?'Salva modifiche':'Crea'}</button></div>
+      <div>${id?`<button class="btn danger ed" id="delBtn" type="button">Elimina</button>`:''}</div>
+      <div class="btns"><button class="btn ghost ed" type="button" ${col==='productions'&&id?'data-cancel-edit':'data-close'}>Annulla</button><button class="btn ghost rd" type="button" data-close>Chiudi</button><button class="btn ed" type="submit" form="shForm" ${readOnly?'disabled':''}>${id?'Salva':'Crea'}</button></div>
     </div>
   </aside>`;
-  if(col==='productions')showTab('lavoro');
+  if(col==='productions')showTab(preset._tab||'lavoro');
+  updateSheetMode();
   setTimeout(()=>{const first=$('#shForm input,#shForm select');if(first&&!id)first.focus()},30);
 }
+function updateSheetMode(){const sh=$('.sheet');if(!sh)return;const ed=!!sh.querySelector('.fs.editing')||!sheet?.id||sheet?.col!=='productions';sh.classList.toggle('is-editing',ed)}
 function closeSheet(){const back=sheet&&sheet.back;sheet=null;$('#sheetRoot').innerHTML='';if(back)openList(back)}
 function refreshSheet(){if(sheet&&sheet.col==='list'){const b=$('#listBody');if(b)b.innerHTML=listBody(sheet.key);return}if(sheet&&sheet.col==='productions'&&!$('#supNew:not([hidden])'))refreshPicker();if(!sheet||!sheet.id)return;const a=document.activeElement;
   // aggiorna solo la lista attività collegata, senza toccare i campi in modifica
@@ -1109,7 +1158,7 @@ async function submitSheet(){
   if(col==='productions'&&$('#tpRows'))data.timePlan=data.kind==='grafica'?(byId(S.productions,id)?.timePlan||[]):sortTP(readTP());
   if(col==='productions')data.crew=(sheet.crew||[]).slice();
   const r=await saveDoc(col,id,data);
-  if(r){toast(id?'Modifiche salvate':'Creato');closeSheet()}
+  if(r){toast(id?'Modifiche salvate':'Creato');if(col==='productions'){const tab=$('.sheet [data-stab][aria-selected="true"]')?.dataset.stab;openSheet('productions',r,{_tab:tab},sheet.back)}else closeSheet()}
 }
 let armT;
 async function deleteCurrent(btn){
@@ -1135,6 +1184,7 @@ function toggleWho(k){
   const bar=$('#crewBar');bar.classList.toggle('both',c.length===2);bar.classList.toggle('none',!c.length);
   bar.querySelectorAll('.who').forEach(b=>{const on=c.includes(b.dataset.who);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);if(b.dataset.who===k){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop')}});
   $('#crewSum').textContent=crewSummary(c);
+  if(sheet.id&&sheet.col==='productions'){clearTimeout(toggleWho._t);toggleWho._t=setTimeout(()=>saveDoc('productions',sheet.id,{crew:sheet.crew.slice()}),500)}
 }
 const TP_PRESETS=['Inizio giornata','Fine giornata'];
 const TIMES=(()=>{const a=[];for(let h=0;h<24;h++)for(let m=0;m<60;m+=10)a.push(pad(h)+':'+pad(m));return a})();
@@ -1156,11 +1206,14 @@ function tpRows(rows){
 }
 function tpBlock(plan){
   const rows=plan.length?plan:[{s:'',e:'',a:'',n:''}];
-  return `<fieldset class="fs fs-tp" data-tab="timeplan"><legend>Time plan della giornata</legend>
-    <div class="tphead"><span>Inizio</span><span>Fine</span><span>Attività</span><span>Note / chi</span><span></span></div>
+  const ro=formGroups.ro,saved=sortTP(plan);
+  const table=saved.length?`<div class="tpro">${saved.map(r=>`<div class="tpr"><b>${esc(r.s&&r.e?r.s+'–'+r.e:(r.s||r.e||''))}</b><span>${esc(r.a)}</span><em>${esc(r.n)}</em></div>`).join('')}</div>`:'<p class="rvempty">Nessun orario inserito. Tocca la matita per creare il time plan.</p>';
+  return `<fieldset class="fs fs-tp ${ro?'':'editing'}" data-tab="timeplan"><legend>Time plan della giornata</legend>
+    ${ro?`<button type="button" class="pen" data-pen aria-label="Modifica time plan" title="Modifica"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z M13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><div class="roview">${table}</div>`:''}
+    <div class="tpedit"><div class="tphead"><span>Inizio</span><span>Fine</span><span>Attività</span><span>Note / chi</span><span></span></div>
     <div id="tpRows">${tpRows(rows)}</div>
-    <div class="tpact"><div class="btns"><button class="btn ghost" type="button" id="tpAdd">+ Riga</button><button class="btn ghost" type="button" id="tpSort">Ordina per orario</button></div>
-    <div class="btns"><button class="btn ghost" type="button" id="tpOpen">Apri PDF</button><button class="btn" type="button" id="tpPdf">Salva PDF</button></div></div></fieldset>`;
+    <div class="btns tpadd"><button class="btn ghost" type="button" id="tpAdd">+ Riga</button><button class="btn ghost" type="button" id="tpSort">Ordina per orario</button></div></div>
+    <div class="tpact"><span></span><div class="btns"><button class="btn ghost" type="button" id="tpOpen">Apri PDF</button><button class="btn" type="button" id="tpPdf">Salva PDF</button></div></div></fieldset>`;
 }
 function readTP(keepEmpty){
   return [...document.querySelectorAll('#tpRows .tprow')].map(el=>({s:tmVal(el.querySelector('.tp-s')),e:tmVal(el.querySelector('.tp-e')),a:(v=>v==='__altro'?el.querySelector('.tp-a').value.trim():v)(el.querySelector('.tp-asel').value),n:el.querySelector('.tp-n').value.trim()})).filter(r=>keepEmpty||r.s||r.e||r.a||r.n);
@@ -1237,7 +1290,7 @@ async function makeTimePlanPDF(btn){
 
 /* ---------- eventi ---------- */
 document.addEventListener('click',async e=>{
-  const t=e.target.closest('#pvPrint,[data-lw],[data-list],[data-who],[data-pw],#cliNewBtn,#cliNewCancel,#locNewBtn,#locNewCancel,[data-stab],[data-tprm],#tpAdd,#tpSort,#tpPdf,#tpOpen,#pvSave,#pvClose,[data-sx],[data-sedit],[data-scancel],[data-sdel],[data-suprm],#supNewBtn,#supNewCancel,[data-cx],[data-cedit],[data-ccancel],[data-cdel],[data-toggle],[data-open],[data-new],[data-close],[data-pf],[data-tt],[data-filter],[data-copy],#delBtn,#loadSamples,#clearSamples,#exportBtn');
+  const t=e.target.closest('[data-pen],[data-cancel-edit],#pvPrint,[data-lw],[data-list],[data-who],[data-pw],#cliNewBtn,#cliNewCancel,#locNewBtn,#locNewCancel,[data-stab],[data-tprm],#tpAdd,#tpSort,#tpPdf,#tpOpen,#pvSave,#pvClose,[data-sx],[data-sedit],[data-scancel],[data-sdel],[data-suprm],#supNewBtn,#supNewCancel,[data-cx],[data-cedit],[data-ccancel],[data-cdel],[data-toggle],[data-open],[data-new],[data-close],[data-pf],[data-tt],[data-filter],[data-copy],#delBtn,#loadSamples,#clearSamples,#exportBtn');
   if(!t)return;
   if(t.dataset.sx){if(sDirty&&sOpen!==t.dataset.sx){toast('Salva o annulla le modifiche prima');return}sOpen=sOpen===t.dataset.sx?null:t.dataset.sx;sEdit=false;sDirty=false;renderSuppliers(true);return}
   if(t.dataset.sedit){sEdit=true;sDirty=false;renderSuppliers(true);return}
@@ -1262,6 +1315,8 @@ document.addEventListener('click',async e=>{
   if(t.id==='tpPdf'||t.id==='pvSave'){makeTimePlanPDF(t);return}
   if(t.id==='tpOpen'){openTimePlanPreview();return}
   if(t.id==='pvClose'){closePreview();return}
+  if(t.hasAttribute('data-pen')){const fs=t.closest('.fs');fs.classList.toggle('editing');updateSheetMode();if(fs.classList.contains('editing')){const f=fs.querySelector('.form input:not([hidden]),.form select:not([hidden]),.form textarea');if(f&&!matchMedia('(pointer:coarse)').matches)f.focus()}return}
+  if(t.hasAttribute('data-cancel-edit')){const tab=$('.sheet [data-stab][aria-selected="true"]')?.dataset.stab;openSheet('productions',sheet.id,{_tab:tab},sheet.back);return}
   if(t.id==='pvPrint'){document.body.classList.add('printing-tp');window.print();setTimeout(()=>document.body.classList.remove('printing-tp'),500);return}
   if(t.dataset.cx){if(cDirty&&cOpen!==t.dataset.cx){toast('Salva o annulla le modifiche prima');return}cOpen=cOpen===t.dataset.cx?null:t.dataset.cx;cEdit=false;cDirty=false;renderClients(true);return}
   if(t.dataset.cedit){cEdit=true;cDirty=false;renderClients(true);return}
