@@ -426,6 +426,49 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .pen{width:26px;height:26px;right:6px}
   .sheet .form input,.sheet .form select{height:30px}
 }
+
+/* calendario */
+.calnav{display:flex;align-items:center;gap:8px;min-width:0}
+.calnav h1{min-width:0;text-transform:none}
+.calnav .x{font-size:20px;line-height:1}
+.calwrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+@media (max-width:900px){.calwrap{grid-template-columns:minmax(0,1fr)}}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cwd{background:var(--surface);font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);text-align:center;padding:6px 0}
+.cd{background:var(--surface);min-height:108px;padding:4px;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0;outline:none}
+.cd:hover{background:var(--raise)}
+.cd:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+.cd.out{background:var(--bg)}.cd.out .cn{opacity:.4}
+.cn{font:600 12px var(--f-mono);align-self:flex-end;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
+.cd.today .cn{background:var(--accent);color:var(--accent-ink)}
+.cd.sel{box-shadow:inset 0 0 0 2px var(--accent);background:var(--raise)}
+.cev{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ce{all:unset;box-sizing:border-box;display:block;font-size:11.5px;line-height:1.35;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--ink)}
+.ce:hover{background:color-mix(in srgb,var(--c) 24%,transparent)}
+.ce.job{background:color-mix(in srgb,var(--c) 26%,transparent);font-weight:600}
+.ce.task{border-left-style:dotted;color:var(--mute)}
+.ce b{font-weight:600;font-variant-numeric:tabular-nums}
+.ce:focus-visible{outline:2px solid var(--accent)}
+.cmore{font-size:11px;color:var(--mute);padding-left:5px}
+.cdots{display:none}
+.calday{padding:6px 14px 10px}
+.cdh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0 4px}
+.cdh h2{margin:0;text-transform:none;letter-spacing:0;font:700 15px var(--f-display);color:var(--ink)}
+.cdh .btn{padding:4px 10px;font-size:13px}
+.calday .row{align-items:flex-start}
+.ctime{flex:none;width:46px;font:600 12px/1.35 var(--f-mono);color:var(--c);border-left:3px solid var(--c);padding-left:6px}
+.ctime small{font:500 10px var(--f-mono);color:var(--mute);text-transform:uppercase}
+.ck{font:600 10px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+@media (max-width:600px){
+  .cd{min-height:48px;padding:2px;align-items:center}
+  .cev{display:none}
+  .cn{align-self:center;width:24px;height:24px;font-size:12px}
+  .cdots{display:flex;gap:2px;justify-content:center;margin-top:auto;padding-bottom:3px;min-height:7px}
+  .cdots i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+  .cwd{font-size:10px;padding:4px 0}
+  .calnav h1{font-size:20px}
+  .calnav .btn{padding:4px 9px}
+}
 </style>
 
 </head>
@@ -438,6 +481,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <nav id="nav" aria-label="Sezioni">
       <div class="nmain">
         <a href="#panoramica" data-v="panoramica">Panoramica</a>
+        <a href="#calendario" data-v="calendario">Calendario</a>
         <a href="#video" data-v="video">Video <em id="nV">0</em></a>
         <a href="#foto" data-v="foto">Foto <em id="nF">0</em></a>
         <a href="#grafica" data-v="grafica">Grafica <em id="nG">0</em></a>
@@ -486,6 +530,24 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="vhead"><h1>Clienti</h1><button class="btn" data-new="clients">+ Nuovo cliente</button></div>
     <div class="bar"><input class="search" id="cSearch" type="search" placeholder="Cerca nome, azienda, email…" aria-label="Cerca clienti"></div>
     <div class="box" id="cList"></div>
+  </section>
+
+  <!-- CALENDARIO -->
+  <section id="v-calendario" hidden>
+    <div class="vhead">
+      <div class="calnav">
+        <button type="button" class="x" id="calPrev" aria-label="Mese precedente">‹</button>
+        <h1 id="calTitle">Calendario</h1>
+        <button type="button" class="x" id="calNext" aria-label="Mese successivo">›</button>
+        <button type="button" class="btn ghost" id="calToday">Oggi</button>
+      </div>
+      <button class="btn" data-new="events">+ Appuntamento</button>
+    </div>
+    <div class="bar"><div class="whof" id="calWho" role="group" aria-label="Filtra per persona"></div><div class="chips" id="calSrc" role="group" aria-label="Cosa mostrare"></div></div>
+    <div class="calwrap">
+      <div class="cal" id="calGrid" role="grid" aria-label="Mese"></div>
+      <aside class="box calday" id="calDay" aria-live="polite"></aside>
+    </div>
   </section>
 
   <!-- BUDGET -->
@@ -596,7 +658,7 @@ const money=n=>(n||n===0)&&n!==''?CHF.format(Number(n)):'';
 const byId=(arr,id)=>arr.find(x=>x.id===id);
 
 /* ---------- stato ---------- */
-const S={clients:[],productions:[],tasks:[],suppliers:[],ready:{clients:false,productions:false,tasks:false,suppliers:false}};
+const S={clients:[],productions:[],tasks:[],suppliers:[],events:[],ready:{clients:false,productions:false,tasks:false,suppliers:false,events:false}};
 let db=null,dl=null,readOnly=false,connected=false;
 let pWho='all';
 let view='panoramica',pFilter='attive',pQuery='',cQuery='',tTab='todo';
@@ -640,12 +702,12 @@ function nextCode(kind='video'){
 }
 
 /* ---------- routing ---------- */
-const VIEWS=['panoramica','video','foto','grafica','clienti','fornitori','budget','attivita'];
+const VIEWS=['panoramica','calendario','video','foto','grafica','clienti','fornitori','budget','attivita'];
 let pKind='video';
 function route(){
   let h=location.hash.slice(1);if(h==='produzioni')h='video';view=VIEWS.includes(h)?h:'panoramica';
   const isProd=['video','foto','grafica'].includes(view);if(isProd)pKind=view;
-  for(const v of ['panoramica','produzioni','clienti','fornitori','budget','attivita'])$('#v-'+v).hidden=v!==(isProd?'produzioni':view);
+  for(const v of ['panoramica','calendario','produzioni','clienti','fornitori','budget','attivita'])$('#v-'+v).hidden=v!==(isProd?'produzioni':view);
   const rub=view==='clienti'||view==='fornitori';
   document.querySelectorAll('#nav a').forEach(a=>{if(a.dataset.v===view||(rub&&a.dataset.v==='rubrica'))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   $('#rubTabs').hidden=!rub;
@@ -702,6 +764,7 @@ function renderAll(){
   if(view==='fornitori')renderSuppliers();
   if(view==='budget')renderBudget();
   if(view==='attivita')renderTasks();
+  if(view==='calendario')renderCalendar();
   refreshSheet();
 }
 
@@ -736,6 +799,7 @@ function renderDash(){
     if(isAsap(p)&&ACTIVE.includes(p.status)){items.push({d:'0000',asap:1,k:'Consegna ASAP',c:'var(--bad)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,late:1});}
     else if(p.deliveryDate&&p.deliveryDate<=end&&ACTIVE.includes(p.status))items.push({d:p.deliveryDate,k:p.deliveryDate<today?'Consegna in ritardo':'Consegna',c:p.deliveryDate<today?'var(--bad)':'var(--ok)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,late:p.deliveryDate<today});
   }
+  for(const e of S.events){const a=e.date,b=e.endDate&&e.endDate>e.date?e.endDate:e.date;if(a&&b>=today&&a<=end)items.push({d:a<today?today:a,k:(e.cat||'Appuntamento')+(e.start&&!e.allDay?' · '+e.start:''),c:evColor(e.cat),t:e.title,s:e.location||'',o:'events:'+e.id})}
   for(const t of S.tasks){if(!t.done&&t.due&&t.due>=today&&t.due<=end){const p=byId(S.productions,t.productionId);items.push({d:t.due,k:'Scadenza',c:'var(--pre)',t:t.title,s:p?prodLabel(p):'',o:'tasks:'+t.id})}}
   items.sort((a,b)=>a.d.localeCompare(b.d));
   $('#agenda').innerHTML=items.length?items.slice(0,14).map(it=>{
@@ -771,6 +835,58 @@ function renderBudget(){
     +eqCostsHtml()
     +(S.productions.some(p=>!(+p.amount))&&S.productions.length?`<p class="code">Le produzioni senza importo contano 0 nei totali.</p>`:'');
 }
+/* ---------- calendario ---------- */
+const EVCATS=[{l:'Appuntamento',c:'var(--pre)'},{l:'Riunione',c:'var(--post)'},{l:'Call',c:'var(--ok)'},{l:'Sopralluogo',c:'var(--accent)'},{l:'Privato',c:'var(--mute)'},{l:'Altro',c:'var(--ink)'}];
+const evColor=c=>(EVCATS.find(x=>x.l===c)||EVCATS[0]).c;
+const KCOL={video:'var(--accent)',foto:'var(--pre)',grafica:'var(--post)'};
+const whoKeys=w=>w==='Matteo'?['matteo']:w==='Kia'?['kia']:w==='Matteo / Kia'?['matteo','kia']:[];
+let calMonth=todayISO().slice(0,7),calSel=todayISO(),calWho='all';
+const calSrc={ev:true,job:true,task:true};
+function calItems(from,to){
+  const out=[];
+  for(const e of S.events){const a=e.date;if(!a)continue;const b=e.endDate&&e.endDate>a?e.endDate:a;if(b<from||a>to)continue;
+    for(let d=a<from?from:a;d<=b&&d<=to;d=addDays(d,1))out.push({d,src:'ev',t:e.title||'(senza titolo)',time:e.allDay?'':e.start||'',end:e.allDay?'':e.end||'',c:evColor(e.cat),k:e.cat||'Appuntamento',who:whoKeys(e.who),o:'events:'+e.id,sub:[e.location,a!==b?`${fmtD(a)} → ${fmtD(b)}`:''].filter(Boolean).join(' · ')})}
+  for(const p of S.productions){if(p.status==='perso')continue;const kd=kindOf(p);
+    if(p.shootDate&&p.shootDate>=from&&p.shootDate<=to)out.push({d:p.shootDate,src:'job',t:p.title,time:'',c:KCOL[kd],k:KIND[kd].shoot+' · '+KIND[kd].l,who:p.crew||[],o:'productions:'+p.id,sub:clientName(p.clientId)});
+    if(!isAsap(p)&&ACTIVE.includes(p.status)&&p.deliveryDate&&p.deliveryDate>=from&&p.deliveryDate<=to)out.push({d:p.deliveryDate,src:'job',t:'Consegna: '+p.title,time:'',c:'var(--ok)',k:'Consegna · '+KIND[kd].l,who:p.crew||[],o:'productions:'+p.id,sub:clientName(p.clientId)});}
+  for(const t of S.tasks){if(!t.done&&t.due&&t.due>=from&&t.due<=to)out.push({d:t.due,src:'task',t:t.title,time:'',c:'var(--mute)',k:'To-do',who:whoKeys(t.assignee),o:'tasks:'+t.id,sub:''})}
+  return out.filter(i=>calSrc[i.src]&&(calWho==='all'||i.who.includes(calWho))).sort((a,b)=>a.d.localeCompare(b.d)||(a.time||'00:00').localeCompare(b.time||'00:00'));
+}
+function renderCalendar(){
+  const [y,m]=calMonth.split('-').map(Number);const first=new Date(y,m-1,1,12);
+  const t=first.toLocaleDateString('it-CH',{month:'long',year:'numeric'});$('#calTitle').textContent=t.charAt(0).toUpperCase()+t.slice(1);
+  const off=(first.getDay()+6)%7,dim=new Date(y,m,0).getDate(),weeks=Math.ceil((off+dim)/7);
+  const g0=addDays(isoDay(first),-off),g1=addDays(g0,weeks*7-1),today=todayISO();
+  const items=calItems(g0,g1),by={};for(const i of items)(by[i.d]=by[i.d]||[]).push(i);
+  $('#calWho').innerHTML=[['all','Tutti']].concat(PEOPLE.map(p=>[p.k,p.n])).map(([k,l])=>{const pp=PEOPLE.find(x=>x.k===k);return `<button type="button" data-cw="${k}" aria-pressed="${calWho===k}" ${pp?`style="--c:${pp.c}"`:''}>${pp?`<i>${pp.i}</i>`:''}${l}</button>`}).join('');
+  $('#calSrc').innerHTML=[['ev','Appuntamenti'],['job','Lavori'],['task','To-do']].map(([k,l])=>`<button type="button" class="chip" data-cs="${k}" aria-pressed="${calSrc[k]}">${l}</button>`).join('');
+  let h=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map(d=>`<div class="cwd" role="columnheader">${d}</div>`).join('');
+  for(let i=0;i<weeks*7;i++){const d=addDays(g0,i),its=by[d]||[],out=d.slice(0,7)!==calMonth;
+    h+=`<div class="cd ${out?'out':''} ${d===today?'today':''} ${d===calSel?'sel':''}" role="gridcell" tabindex="0" data-cday="${d}" aria-label="${esc(fmtDW(d))}${its.length?', '+its.length+' voci':''}">
+      <span class="cn">${+d.slice(8)}</span>
+      <span class="cev">${its.slice(0,3).map(it=>`<button type="button" class="ce ${it.src}" style="--c:${it.c}" data-open="${it.o}" title="${esc(it.t)}">${it.time?`<b>${it.time}</b> `:''}${esc(it.t)}</button>`).join('')}${its.length>3?`<span class="cmore">+${its.length-3}</span>`:''}</span>
+      <span class="cdots">${its.slice(0,4).map(it=>`<i style="--c:${it.c}"></i>`).join('')}</span></div>`}
+  $('#calGrid').innerHTML=h;
+  const di=calItems(calSel,calSel),dt=fmtDW(calSel);
+  $('#calDay').innerHTML=`<div class="cdh"><h2>${esc(dt.charAt(0).toUpperCase()+dt.slice(1))}${calSel===today?' · oggi':''}</h2><button class="btn ghost" type="button" data-new="events" data-date="${calSel}">+ Aggiungi</button></div>
+    ${di.length?di.map(it=>`<div class="row click" data-open="${it.o}" style="--c:${it.c}"><span class="ctime">${it.time?`${it.time}${it.end?`<br>${it.end}`:''}`:'<small>giorno</small>'}</span><div class="m"><div class="ck">${esc(it.k)}</div><div class="t">${esc(it.t)}</div>${it.sub?`<div class="s"><span>${esc(it.sub)}</span></div>`:''}</div><div class="r">${crewDots(it.who)}</div></div>`).join(''):'<div class="empty">Niente in programma.</div>'}`;
+}
+function calGo(n){const [y,m]=calMonth.split('-').map(Number);const d=new Date(y,m-1+n,1,12);calMonth=isoDay(d).slice(0,7);const sm=calSel.slice(0,7)===calMonth;if(!sm)calSel=calMonth===todayISO().slice(0,7)?todayISO():calMonth+'-01';renderCalendar()}
+document.addEventListener('click',e=>{
+  if(view!=='calendario')return;
+  const b=e.target.closest('#calPrev,#calNext,#calToday,[data-cw],[data-cs],[data-cday]');if(!b||e.target.closest('[data-open]'))return;
+  if(b.id==='calPrev')return calGo(-1);if(b.id==='calNext')return calGo(1);
+  if(b.id==='calToday'){calSel=todayISO();calMonth=calSel.slice(0,7);return renderCalendar()}
+  if(b.dataset.cw){calWho=b.dataset.cw;return renderCalendar()}
+  if(b.dataset.cs){calSrc[b.dataset.cs]=!calSrc[b.dataset.cs];return renderCalendar()}
+  if(b.dataset.cday){calSel=b.dataset.cday;if(calSel.slice(0,7)!==calMonth)calMonth=calSel.slice(0,7);renderCalendar();
+    if(matchMedia('(max-width:900px)').matches)$('#calDay').scrollIntoView({behavior:'smooth',block:'nearest'})}
+});
+document.addEventListener('keydown',e=>{if(view==='calendario'&&(e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-cday]')){e.preventDefault();e.target.click()}});
+(()=>{let x0=null,y0=null;const g=()=>$('#calGrid');
+  document.addEventListener('touchstart',e=>{if(!g()||!g().contains(e.target))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5)calGo(dx<0?1:-1)},{passive:true});
+})();
 const PFILTERS=[['attive','Aperte'],['ph0','Pre-produzione'],['ph1','__ph1'],['ph2','Post'],['ph3','Consegnate'],['archivio','Archivio'],['tutte','Tutte']];
 function renderProds(){
   $('#pChips').innerHTML=PFILTERS.map(([k,l])=>`<button class="chip" data-pf="${k}" aria-pressed="${pFilter===k}">${l==='__ph1'?KIND[pKind].ph1:l}</button>`).join('');
@@ -958,6 +1074,13 @@ const SPEC={
     {k:'equipList',l:'Che cosa',type:'textarea',w:1,cls:'eq',ph:'es. 2× FX6, kit luci Aputure 600d, drone Mavic 3, radiomicrofoni…'},
     {type:'hd',l:'Note'},
     {k:'notes',l:'Note (brief, link)',type:'textarea',w:1}]},
+  events:{title:'appuntamento',nuovo:'Nuovo appuntamento',fields:[
+    {k:'title',l:'Titolo',req:1,span:4},{k:'cat',l:'Tipo',type:'select',opts:null,span:2},
+    {k:'date',l:'Data',type:'date',req:1,span:2},{k:'start',l:'Inizio',type:'time',span:2},{k:'end',l:'Fine',type:'time',span:2},
+    {k:'endDate',l:'Fino al (più giorni)',type:'date',span:2},{k:'who',l:'Chi',type:'who',span:2},{k:'allDay',l:'Tutto il giorno',type:'check',span:2},
+    {k:'location',l:'Luogo',w:1},
+    {k:'productionId',l:'Lavoro collegato',type:'prod',w:1},
+    {k:'notes',l:'Note',type:'textarea',w:1}]},
   tasks:{title:'attività',fields:[
     {k:'title',l:'Cosa fare',req:1,w:1},
     {k:'productionId',l:'Produzione',type:'prod',w:1},
@@ -1049,8 +1172,9 @@ function field(f,v){
   const id='f_'+f.k,rq=f.req?'required':'';
   let inp;
   if(f.type==='textarea')inp=`<textarea id="${id}" name="${f.k}" ${f.ph?`placeholder="${esc(f.ph)}"`:''}>${esc(v)}</textarea>`;
-  else if(f.type==='select')inp=`<select id="${id}" name="${f.k}"><option value=""></option>${f.opts.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  else if(f.type==='select')inp=`<select id="${id}" name="${f.k}"><option value=""></option>${(f.opts||EVCATS.map(x=>x.l)).map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
   else if(f.type==='equip')inp=`<select id="${id}" name="${f.k}">${EQUIP.map(e=>`<option value="${e.k}" ${e.k===(v||'')?'selected':''}>${esc(e.l)}</option>`).join('')}</select>`;
+  else if(f.type==='time')inp=`<select id="${id}" name="${f.k}"><option value="">--:--</option>${(v&&!TIMES.includes(v)?[v]:[]).concat(TIMES).map(t=>`<option ${t===v?'selected':''}>${t}</option>`).join('')}</select>`;
   else if(f.type==='who')inp=`<select id="${id}" name="${f.k}"><option value="">—</option>${['Matteo','Kia','Matteo / Kia'].concat(v&&!['Matteo','Kia','Matteo / Kia'].includes(v)?[v]:[]).map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
   else if(f.type==='eqpay')inp=`<select id="${id}" name="${f.k}">${EQPAY.map(e=>`<option value="${e.k}" ${e.k===(v||'')?'selected':''}>${esc(e.l)}</option>`).join('')}</select>`;
   else if(f.type==='kind')inp=`<select id="${id}" name="${f.k}">${Object.entries(KIND).map(([k,o])=>`<option value="${k}" ${k===(v||'video')?'selected':''}>${o.l}</option>`).join('')}</select>`;
@@ -1100,7 +1224,7 @@ function openSheet(col,id,preset={},back=null){
   if(id&&!rec){toast('Voce non trovata');return}
   const v=Object.assign({},preset,rec||{});
   sheet={col,id,back};if(col==='productions'){v.kind=kindOf(v);field._kind=v.kind;field._rec=v;sheet.sup=(v.equipSuppliers||[]).slice();sheet.crew=(v.crew||[]).slice()}
-  let head=id?(col==='productions'?esc(v.title):col==='clients'?esc(v.company||v.name):esc(v.title)):'Nuov'+(col==='clients'?'o ':'a ')+spec.title;
+  let head=id?(col==='productions'?esc(v.title):col==='clients'?esc(v.company||v.name):esc(v.title)):(spec.nuovo||('Nuov'+(col==='clients'?'o ':'a ')+spec.title));
   let kicker=col==='productions'?(v.code||nextCode(v.kind)):spec.title;
   formGroups.ro=col==='productions'&&!!id&&!readOnly===true?true:(col==='productions'&&!!id);
   let extra=col==='productions'?tpBlock(v.timePlan||[]):'';
@@ -1337,6 +1461,7 @@ document.addEventListener('click',async e=>{
   if(t.dataset.open){const [c,i]=t.dataset.open.split(':');e.preventDefault();openSheet(c,i,{},sheet&&sheet.col==='list'?sheet.key:null);return}
   if(t.dataset.new==='clients'){newClientInline();return}
   if(t.dataset.new==='suppliers'){newSupplierInline();return}
+  if(t.dataset.new==='events'){openSheet('events',null,{date:t.dataset.date||calSel||todayISO(),cat:'Appuntamento'});return}
   if(t.dataset.new){const pre={};if(t.dataset.client)pre.clientId=t.dataset.client;if(t.dataset.kind)pre.kind=t.dataset.kind;else if(t.dataset.new==='productions'&&KIND[view])pre.kind=view;openSheet(t.dataset.new,null,pre);return}
   if(t.hasAttribute('data-close')){closeSheet();return}
   if(t.dataset.pf){pFilter=t.dataset.pf;renderProds();return}
@@ -1376,6 +1501,7 @@ document.addEventListener('submit',async e=>{
 let qt;$('#pSearch').addEventListener('input',e=>{pQuery=e.target.value;clearTimeout(qt);qt=setTimeout(renderProds,120)});
 document.addEventListener('input',e=>{if(e.target.closest('#cForm'))cDirty=true;if(e.target.closest('#sForm'))sDirty=true});
 document.addEventListener('change',e=>{
+  if(e.target.id==='f_start'&&sheet?.col==='events'){const en=$('#f_end');if(en&&!en.value&&e.target.value){const [h,mm]=e.target.value.split(':').map(Number);const t2=pad(Math.min(h+1,23))+':'+pad(mm);en.value=t2}return}
   if(e.target.id==='f_clientId'){const n=e.target.value==='__new';$('#cliNew').hidden=!n;if(n)$('#cliNewCompany').focus();return}
   if(e.target.id==='f_locSel'){const n=e.target.value==='__new';$('#locNew').hidden=!n;if(n)$('#locNewName').focus();return}
   if(e.target.classList.contains('tp-asel')){const inp=e.target.parentNode.querySelector('.tp-a');const o=e.target.value==='__altro';inp.hidden=!o;e.target.hidden=o;if(o){inp.value='';inp.focus()}return}
@@ -1390,7 +1516,7 @@ $('#cSearch').addEventListener('input',e=>{cQuery=e.target.value;clearTimeout(qt
 async function exportAll(){
   if(!dl){toast('Esportazione non disponibile qui');return}
   const strip=a=>a.map(({sample,...r})=>r);
-  const data=JSON.stringify({exportedAt:new Date().toISOString(),app:'VD Pictures',clients:strip(S.clients),productions:strip(S.productions),tasks:strip(S.tasks),suppliers:strip(S.suppliers)},null,2);
+  const data=JSON.stringify({exportedAt:new Date().toISOString(),app:'VD Pictures',clients:strip(S.clients),productions:strip(S.productions),tasks:strip(S.tasks),suppliers:strip(S.suppliers),events:strip(S.events)},null,2);
   try{await dl.save({filename:'vd-pictures-'+todayISO()+'.json',data});toast('File pronto')}
   catch(e){if(e.code!=='declined')toast('Esportazione non riuscita')}
 }
@@ -1416,7 +1542,7 @@ async function clearSamples(btn){
   for(const col of ['tasks','productions','clients','suppliers'])for(const x of S[col].filter(x=>x.sample))await delDoc(col,x.id);
   btn.classList.remove('arm','danger');btn.textContent='Rimuovi dati di esempio';toast('Esempi rimossi');
 }
-const allReady=()=>S.ready.clients&&S.ready.productions&&S.ready.tasks&&S.ready.suppliers;
+const allReady=()=>S.ready.clients&&S.ready.productions&&S.ready.tasks&&S.ready.suppliers&&S.ready.events;
 var initDone=false;
 /* ---------- Supabase ---------- */
 const SB_URL='https://wgwamhrvybkxpqmacgwk.supabase.co';
@@ -1425,7 +1551,7 @@ let sb=null,channel=null;
 function showLogin(msg){$('#sblogin').hidden=false;$('#sbErr').textContent=msg||'';setTimeout(()=>$('#sbEmail').focus(),30)}
 function hideLogin(){$('#sblogin').hidden=true}
 async function loadAll(){
-  const out={clients:[],productions:[],tasks:[],suppliers:[]};let from=0;
+  const out={clients:[],productions:[],tasks:[],suppliers:[],events:[]};let from=0;
   for(;;){const {data,error}=await sb.from('docs').select('col,id,data').range(from,from+999);if(error)throw error;
     for(const r of data)if(out[r.col])out[r.col].push({id:r.id,...r.data});if(data.length<1000)break;from+=1000}
   Object.assign(S,out);for(const k in S.ready)S.ready[k]=true;renderAll();
@@ -1469,7 +1595,7 @@ $('#sbForm').addEventListener('submit',async e=>{
   $('#sbPass').value='';startSession();
 });
 $('#pwToggle').addEventListener('click',()=>{const i=$('#sbPass');const show=i.type==='password';i.type=show?'text':'password';$('#pwToggle').textContent=show?'Nascondi':'Mostra'});
-$('#logoutBtn').addEventListener('click',async()=>{if(channel)sb.removeChannel(channel);await sb.auth.signOut();S.clients=[];S.productions=[];S.tasks=[];S.suppliers=[];renderAll()});
+$('#logoutBtn').addEventListener('click',async()=>{if(channel)sb.removeChannel(channel);await sb.auth.signOut();S.clients=[];S.productions=[];S.tasks=[];S.suppliers=[];S.events=[];renderAll()});
 </script>
 </body>
 </html>
