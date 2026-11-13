@@ -727,7 +727,7 @@ const pill=(k,kind)=>`<span class="pill" style="--c:${statusColor(k)}">${esc(stL
 function phaseBar(k){const s=ST[k];const ph=s?s.ph:-1;const c=statusColor(k);
   return `<span class="ph" style="--c:${c}" aria-hidden="true">${[0,1,2,3].map(i=>`<i class="${(ph>=i||ph===4)?'on':''}"></i>`).join('')}</span>`}
 const clientName=id=>{const c=byId(S.clients,id);return c?(c.company||c.name):''};
-function prodLabel(p){return p?`${p.code?p.code+' · ':''}${p.title}`:''}
+function prodLabel(p){return p?p.title:''}
 
 function prodRow(p){
   const cl=clientName(p.clientId);
@@ -735,7 +735,7 @@ function prodRow(p){
   const late=ACTIVE.includes(p.status)&&(asap||(p.deliveryDate&&p.deliveryDate<todayISO()));
   const eq=EQ[p.equip||''];const eqWarn=ACTIVE.includes(p.status)&&(p.equip==='daordinare'||p.equip==='mistodaord');
   return `<div class="row click" data-open="productions:${p.id}">
-    <div class="m"><div class="code"><span class="kt kt-${kd}">${KIND[kd].l}</span>${esc(p.code||'')}${p.type?' · '+esc(p.type):''}</div>
+    <div class="m"><div class="code"><span class="kt kt-${kd}">${KIND[kd].l}</span>${p.type?esc(p.type):''}</div>
       <div class="t">${esc(p.title)}</div>
       <div class="s">${cl?`<span>${esc(cl)}</span>`:''}${dates.map((d,i)=>`<span class="${late&&i===dates.length-1?'due late':''}">${esc(d)}</span>`).join('')}${eqWarn?`<span class="due late">Attrezzatura da ordinare</span>`:''}${p.equipPay==='dapagare'?`<span class="due late">Noleggio da pagare${p.equipCost?' · '+money(p.equipCost):''}</span>`:''}</div></div>
     <div class="r"><span class="rtop">${crewDots(p.crew)}${pill(p.status,kindOf(p))}</span>${phaseBar(p.status)}${p.amount?`<span class="amt">${money(p.amount)}</span>`:''}</div></div>`;
@@ -822,7 +822,7 @@ function renderDash(){
 function taskSort(a,b){return (a.due||'9999').localeCompare(b.due||'9999')||(a.createdAt||'').localeCompare(b.createdAt||'')}
 
 function eqCostsHtml(){
-  const row=p=>`<div class="row click" data-open="productions:${p.id}"><div class="m"><div class="code"><span class="kt kt-${kindOf(p)}">${KIND[kindOf(p)].l}</span>${esc(p.code||'')}</div><div class="t">${esc(p.title)}</div><div class="s">${(p.equipSuppliers||[]).map(id=>`<span>${esc(supName(id))}</span>`).join('')}</div></div><div class="r"><span class="amt">${p.equipCost?money(p.equipCost):'Importo mancante'}</span></div></div>`;
+  const row=p=>`<div class="row click" data-open="productions:${p.id}"><div class="m"><div class="code"><span class="kt kt-${kindOf(p)}">${KIND[kindOf(p)].l}</span></div><div class="t">${esc(p.title)}</div><div class="s">${(p.equipSuppliers||[]).map(id=>`<span>${esc(supName(id))}</span>`).join('')}</div></div><div class="r"><span class="amt">${p.equipCost?money(p.equipCost):'Importo mancante'}</span></div></div>`;
   const tot=a=>a.reduce((t,p)=>t+(+p.equipCost||0),0);
   const due=S.productions.filter(p=>p.equipPay==='dapagare'),paid=S.productions.filter(p=>p.equipPay==='pagato');
   return `<div class="sec"><h2>Noleggi da pagare <span class="code">${CHF.format(tot(due))}</span></h2><div class="box">${due.length?due.map(row).join(''):'<div class="empty">Nessun noleggio da pagare.</div>'}</div></div>
