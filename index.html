@@ -450,7 +450,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ce b{font-weight:600;font-variant-numeric:tabular-nums}
 .ce:focus-visible{outline:2px solid var(--accent)}
 .cmore{font-size:11px;color:var(--mute);padding-left:5px}
-.cdots{display:none}
+.cmini{display:none}
 .calday{padding:6px 14px 10px}
 .cdh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0 4px}
 .cdh h2{margin:0;text-transform:none;letter-spacing:0;font:700 15px var(--f-display);color:var(--ink)}
@@ -463,8 +463,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .cd{min-height:48px;padding:2px;align-items:center}
   .cev{display:none}
   .cn{align-self:center;width:24px;height:24px;font-size:12px}
-  .cdots{display:flex;gap:2px;justify-content:center;margin-top:auto;padding-bottom:3px;min-height:7px}
-  .cdots i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+  .cd{align-items:stretch;min-height:58px}
+  .cmini{display:flex;flex-direction:column;gap:1px;min-width:0;width:100%}
+  .cmini i{display:block;font:600 8.5px/1.25 var(--f-body);font-style:normal;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 2px;border-radius:2px;background:color-mix(in srgb,var(--c) 22%,transparent);border-left:2px solid var(--c)}
+  .cmini em{font:600 8px var(--f-mono);font-style:normal;color:var(--mute);text-align:center}
   .cwd{font-size:10px;padding:4px 0}
   .calnav h1{font-size:20px}
   .calnav .btn{padding:4px 9px}
@@ -865,7 +867,7 @@ function renderCalendar(){
     h+=`<div class="cd ${out?'out':''} ${d===today?'today':''} ${d===calSel?'sel':''}" role="gridcell" tabindex="0" data-cday="${d}" aria-label="${esc(fmtDW(d))}${its.length?', '+its.length+' voci':''}">
       <span class="cn">${+d.slice(8)}</span>
       <span class="cev">${its.slice(0,3).map(it=>`<button type="button" class="ce ${it.src}" style="--c:${it.c}" data-open="${it.o}" title="${esc(it.t)}">${it.time?`<b>${it.time}</b> `:''}${esc(it.t)}</button>`).join('')}${its.length>3?`<span class="cmore">+${its.length-3}</span>`:''}</span>
-      <span class="cdots">${its.slice(0,4).map(it=>`<i style="--c:${it.c}"></i>`).join('')}</span></div>`}
+      <span class="cmini">${its.slice(0,2).map(it=>`<i style="--c:${it.c}">${esc(it.t)}</i>`).join('')}${its.length>2?`<em>+${its.length-2}</em>`:''}</span></div>`}
   $('#calGrid').innerHTML=h;
   const di=calItems(calSel,calSel),dt=fmtDW(calSel);
   $('#calDay').innerHTML=`<div class="cdh"><h2>${esc(dt.charAt(0).toUpperCase()+dt.slice(1))}${calSel===today?' · oggi':''}</h2><button class="btn ghost" type="button" data-new="events" data-date="${calSel}">+ Aggiungi</button></div>
