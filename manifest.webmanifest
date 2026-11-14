@@ -1,6 +1,6 @@
 {
-  "name": "VD Pictures",
-  "short_name": "VD Pictures",
+  "name": "VDPICTURES",
+  "short_name": "VDPICTURES",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",
