@@ -170,6 +170,12 @@ h2{font:700 13px var(--f-display);font-stretch:118%;text-transform:uppercase;let
 .arch{flex:none;border-color:var(--ok)!important;color:var(--ok)!important}
 .arch:hover{background:var(--ok)!important;color:var(--bg)!important}
 .grp.ok{color:var(--ok)}
+.archhead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0}
+.archtog{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:10px;font-weight:600}
+.archtog .chev{transform:rotate(-45deg) translate(-1px,-1px)}
+.archtog[aria-expanded="true"] .chev{transform:rotate(45deg) translate(-2px,-2px)}
+.archtog:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.archhead+.list{border-top:1px solid var(--line)}
 .archall{margin-left:auto;font:600 12px var(--f-body);text-transform:none;letter-spacing:0}
 .due{font-family:var(--f-mono);font-size:12px}
 .due.late{color:var(--bad)}
@@ -1067,6 +1073,7 @@ function prodOptions(sel,blank='Nessuna produzione'){
   const o=p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(prodLabel(p))}</option>`;
   return `<option value="">${blank}</option>${act.length?`<optgroup label="Aperte">${act.map(o).join('')}</optgroup>`:''}${rest.length?`<optgroup label="Chiuse">${rest.map(o).join('')}</optgroup>`:''}`;
 }
+let archOpen=false,archArm=false;
 function renderTasks(){
   document.querySelectorAll('#tChips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tt===tTab));
   const qp=$('#qProd');if(document.activeElement!==qp){const v=qp.value;qp.innerHTML=prodOptions(v);qp.value=v}
@@ -1074,7 +1081,11 @@ function renderTasks(){
   const today=todayISO(),week=addDays(today,7);
   if(tTab==='done'){
     const ds=S.tasks.filter(t=>t.archived).sort((a,b)=>(b.archivedAt||b.doneAt||'').localeCompare(a.archivedAt||a.doneAt||''));
-    $('#tList').innerHTML=ds.length?ds.map(t=>taskRow(t)).join(''):`<div class="empty">Nessuna attività archiviata.</div>`;return;
+    if(!ds.length){$('#tList').innerHTML=`<div class="empty">Nessuna attività archiviata.</div>`;return}
+    $('#tList').innerHTML=`<div class="archhead">
+      <button type="button" class="archtog" data-archtog aria-expanded="${archOpen}"><span class="chev" aria-hidden="true"></span>Archiviate <span class="code">${ds.length}</span></button>
+      <button type="button" class="btn danger mini" data-archclear>Svuota archivio</button></div>
+      ${archOpen?`<div class="list">${ds.map(t=>taskRow(t)).join('')}</div>`:''}`;return;
   }
   const open=S.tasks.filter(t=>!t.done).sort(taskSort),ticked=S.tasks.filter(t=>t.done&&!t.archived).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
   const groups=[['Scadute',t=>t.due&&t.due<today,'bad'],['Oggi',t=>t.due===today],['Prossimi 7 giorni',t=>t.due>today&&t.due<=week],['Più avanti',t=>t.due>week],['Senza scadenza',t=>!t.due]];
@@ -1457,7 +1468,7 @@ async function makeTimePlanPDF(btn){
 
 /* ---------- eventi ---------- */
 document.addEventListener('click',async e=>{
-  const t=e.target.closest('[data-arch],[data-unarch],[data-archall],[data-pen],[data-cancel-edit],#pvPrint,[data-lw],[data-list],[data-who],[data-pw],#cliNewBtn,#cliNewCancel,#locNewBtn,#locNewCancel,[data-stab],[data-tprm],#tpAdd,#tpSort,#tpPdf,#tpOpen,#pvSave,#pvClose,[data-sx],[data-sedit],[data-scancel],[data-sdel],[data-suprm],#supNewBtn,#supNewCancel,[data-cx],[data-cedit],[data-ccancel],[data-cdel],[data-toggle],[data-open],[data-new],[data-close],[data-pf],[data-tt],[data-filter],[data-copy],#delBtn,#loadSamples,#clearSamples,#exportBtn');
+  const t=e.target.closest('[data-archtog],[data-archclear],[data-arch],[data-unarch],[data-archall],[data-pen],[data-cancel-edit],#pvPrint,[data-lw],[data-list],[data-who],[data-pw],#cliNewBtn,#cliNewCancel,#locNewBtn,#locNewCancel,[data-stab],[data-tprm],#tpAdd,#tpSort,#tpPdf,#tpOpen,#pvSave,#pvClose,[data-sx],[data-sedit],[data-scancel],[data-sdel],[data-suprm],#supNewBtn,#supNewCancel,[data-cx],[data-cedit],[data-ccancel],[data-cdel],[data-toggle],[data-open],[data-new],[data-close],[data-pf],[data-tt],[data-filter],[data-copy],#delBtn,#loadSamples,#clearSamples,#exportBtn');
   if(!t)return;
   if(t.dataset.sx){if(sDirty&&sOpen!==t.dataset.sx){toast('Salva o annulla le modifiche prima');return}sOpen=sOpen===t.dataset.sx?null:t.dataset.sx;sEdit=false;sDirty=false;renderSuppliers(true);return}
   if(t.dataset.sedit){sEdit=true;sDirty=false;renderSuppliers(true);return}
@@ -1492,6 +1503,12 @@ document.addEventListener('click',async e=>{
     if(S.productions.some(p=>p.clientId===id)){toast('Questo cliente ha produzioni: spostale o eliminale prima');return}
     if(cArm!==id){cArm=id;t.classList.add('arm');t.textContent='Conferma eliminazione';setTimeout(()=>{if(cArm===id){cArm=null;t.classList.remove('arm');t.textContent='Elimina'}},4000);return}
     cArm=null;if(await delDoc('clients',id)){cOpen=null;cEdit=false;cDirty=false;toast('Cliente eliminato');renderClients(true)}return}
+  if(t.hasAttribute('data-archtog')){archOpen=!archOpen;renderTasks();return}
+  if(t.hasAttribute('data-archclear')){
+    if(!archArm){archArm=true;t.classList.add('arm');t.textContent='Conferma: elimina tutte';setTimeout(()=>{archArm=false;if(t.isConnected){t.classList.remove('arm');t.textContent='Svuota archivio'}},4000);return}
+    archArm=false;const ids=S.tasks.filter(x=>x.archived).map(x=>x.id);t.disabled=true;t.textContent='Elimino…';
+    for(const id of ids)await delDoc('tasks',id);
+    toast(ids.length===1?'Archivio svuotato: 1 attività eliminata':`Archivio svuotato: ${ids.length} attività eliminate`);renderTasks();return}
   if(t.dataset.arch){e.stopPropagation();archiveTask(t.dataset.arch);return}
   if(t.dataset.unarch){e.stopPropagation();archiveTask(t.dataset.unarch,false);return}
   if(t.hasAttribute('data-archall')){for(const x of S.tasks.filter(x=>x.done&&!x.archived))await saveDoc('tasks',x.id,{archived:true,archivedAt:new Date().toISOString()});toast('Archiviate');return}
