@@ -158,6 +158,7 @@ h2{font:700 13px var(--f-display);font-stretch:118%;text-transform:uppercase;let
 .ag .k{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--c)}
 .ag .t{font-weight:600;overflow-wrap:anywhere}
 .ag:hover .t{color:var(--accent)}
+.agm{display:flex;align-items:flex-start;gap:10px;min-width:0}.agt{flex:1;min-width:0}.agm .crewdots{margin-top:2px;flex:none}
 .ag.late .d,.ag.late .d b{color:var(--bad)}
 
 /* Check */
@@ -837,18 +838,18 @@ function renderDash(){
   const end=addDays(today,14),items=[];
   for(const p of S.productions){
     if(['perso','pagato'].includes(p.status))continue;
-    if(p.shootDate&&p.shootDate>=today&&p.shootDate<=end)items.push({d:p.shootDate,k:KIND[kindOf(p)].shoot+' · '+KIND[kindOf(p)].l,c:'var(--accent)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id});
-    if(isAsap(p)&&ACTIVE.includes(p.status)){items.push({d:'0000',asap:1,k:'Consegna ASAP',c:'var(--bad)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,late:1});}
-    else if(p.deliveryDate&&p.deliveryDate<=end&&ACTIVE.includes(p.status))items.push({d:p.deliveryDate,k:p.deliveryDate<today?'Consegna in ritardo':'Consegna',c:p.deliveryDate<today?'var(--bad)':'var(--ok)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,late:p.deliveryDate<today});
+    if(p.shootDate&&p.shootDate>=today&&p.shootDate<=end)items.push({d:p.shootDate,k:KIND[kindOf(p)].shoot+' · '+KIND[kindOf(p)].l,c:'var(--accent)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,who:p.crew||[]});
+    if(isAsap(p)&&ACTIVE.includes(p.status)){items.push({d:'0000',asap:1,k:'Consegna ASAP',c:'var(--bad)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,who:p.crew||[],late:1});}
+    else if(p.deliveryDate&&p.deliveryDate<=end&&ACTIVE.includes(p.status))items.push({d:p.deliveryDate,k:p.deliveryDate<today?'Consegna in ritardo':'Consegna',c:p.deliveryDate<today?'var(--bad)':'var(--ok)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,who:p.crew||[],late:p.deliveryDate<today});
   }
-  for(const e of S.events){const a=e.date,b=e.endDate&&e.endDate>e.date?e.endDate:e.date;if(a&&b>=today&&a<=end)items.push({d:a<today?today:a,k:(e.cat||'Appuntamento')+(e.start&&!e.allDay?' · '+e.start:''),c:evColor(e.cat),t:e.title,s:e.location||'',o:'events:'+e.id})}
-  for(const t of S.tasks){if(!t.done&&t.due&&t.due>=today&&t.due<=end){const p=byId(S.productions,t.productionId);items.push({d:t.due,k:'Scadenza',c:'var(--pre)',t:t.title,s:p?prodLabel(p):'',o:'tasks:'+t.id})}}
+  for(const e of S.events){const a=e.date,b=e.endDate&&e.endDate>e.date?e.endDate:e.date;if(a&&b>=today&&a<=end)items.push({d:a<today?today:a,k:(e.cat||'Appuntamento')+(e.start&&!e.allDay?' · '+e.start:''),c:evColor(e.cat),t:e.title,s:e.location||'',o:'events:'+e.id,who:whoKeys(e.who)})}
+  for(const t of S.tasks){if(!t.done&&t.due&&t.due>=today&&t.due<=end){const p=byId(S.productions,t.productionId);items.push({d:t.due,k:'Scadenza',c:'var(--pre)',t:t.title,s:p?prodLabel(p):'',o:'tasks:'+t.id,who:whoKeys(t.assignee)})}}
   items.sort((a,b)=>a.d.localeCompare(b.d));
   $('#agenda').innerHTML=items.length?items.slice(0,14).map(it=>{
     const dt=new Date(it.d+'T12:00:00');
     return `<div class="ag ${it.late?'late':''}" data-open="${it.o}" role="button" tabindex="0">
       <div class="d">${it.asap?'<b>ASAP</b>':`${esc(dt.toLocaleDateString('it-CH',{weekday:'short'}))}<b>${dt.getDate()}</b>${esc(dt.toLocaleDateString('it-CH',{month:'short'}))}`}</div>
-      <div style="min-width:0"><div class="k" style="--c:${it.c}">${esc(it.k)}</div><div class="t">${esc(it.t)}</div>${it.s?`<div class="s" style="font-size:13px;color:var(--mute)">${esc(it.s)}</div>`:''}</div></div>`}).join('')
+      <div class="agm"><div class="agt"><div class="k" style="--c:${it.c}">${esc(it.k)}</div><div class="t">${esc(it.t)}</div>${it.s?`<div class="s" style="font-size:13px;color:var(--mute)">${esc(it.s)}</div>`:''}</div>${crewDots(it.who)}</div></div>`}).join('')
     :`<div class="empty">Nessuna ripresa, consegna o scadenza nelle prossime due settimane.</div>`;
 
   const open=S.tasks.filter(t=>!t.archived).sort((a,b)=>(a.done-b.done)||taskSort(a,b));
