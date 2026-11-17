@@ -137,6 +137,8 @@ h2{font:700 13px var(--f-display);font-stretch:118%;text-transform:uppercase;let
 .kt-video{color:var(--accent)}.kt-foto{color:var(--pre)}.kt-grafica{color:var(--post)}
 .no-eq .eq{display:none!important}
 .no-cost .rv.eqcost{display:none!important}
+.rbill{display:flex;align-items:center;gap:6px}
+.bill{font:600 10px var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--c);border:1px solid var(--c);border-radius:3px;padding:0 4px}
 .amt{font:500 14px var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
 .code{font:500 12px var(--f-mono);color:var(--mute);letter-spacing:.02em;white-space:nowrap}
 .empty{color:var(--mute);padding:16px 0;font-size:14px}
@@ -209,7 +211,7 @@ textarea{min-height:64px;resize:vertical}
 .x{background:none;border:1px solid var(--line);border-radius:6px;width:34px;height:34px;cursor:pointer;flex:none;font-size:18px;line-height:1;color:var(--mute)}
 .x:hover{color:var(--ink);border-color:var(--mute)}
 .form{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 10px}
-.form .c2{grid-column:span 2}.form .c3{grid-column:span 3}.form .c4{grid-column:span 4}
+.form .c2{grid-column:span 2}.form .c3{grid-column:span 3}.form .c4{grid-column:span 4}.form .c6{grid-column:1/-1}
 .sheet .form input,.sheet .form select,.sheet .form textarea{padding:6px 8px;font-size:14px}
 @media (max-width:560px){.form{grid-template-columns:repeat(6,minmax(0,1fr))}.form .cfull{grid-column:1/-1}
   .sheet .form input,.sheet .form select{padding:4px 5px!important;height:34px}
@@ -656,8 +658,6 @@ const STATUSES=[
   {k:'montaggio',l:'Post-produzione',ph:2},
   {k:'revisione',l:'Revisione cliente',ph:2},
   {k:'consegnato',l:'Consegnato',ph:3},
-  {k:'fatturato',l:'Fatturato',ph:3},
-  {k:'pagato',l:'Pagato',ph:4},
   {k:'perso',l:'Perso / annullato',ph:-1}
 ];
 const PHASES=[{l:'Pre-produzione',c:'var(--pre)'},{l:'Produzione',c:'var(--accent)'},{l:'Post',c:'var(--post)'},{l:'Consegna',c:'var(--ok)'}];
@@ -680,7 +680,11 @@ const stLabel=(k,kind)=>k==='riprese'?KIND[kind||'video'].ph1:(ST[k]?.l||'—');
 const ST=Object.fromEntries(STATUSES.map(s=>[s.k,s]));
 const ACTIVE=['richiesta','preventivo','confermato','riprese','montaggio','revisione'];
 const WORKING=['confermato','riprese','montaggio','revisione','consegnato'];
-const statusColor=k=>{const s=ST[k];if(!s)return'var(--mute)';if(s.ph===-1)return'var(--bad)';if(s.ph===4)return'var(--mute)';return PHASES[s.ph].c};
+const BILL=[{k:'',l:'Da fatturare',s:'',c:'var(--mute)'},{k:'fatturato',l:'Fatturato – da pagare',s:'Fatturato',c:'var(--accent)'},{k:'pagato',l:'Pagato',s:'Pagato',c:'var(--ok)'}];
+const billOf=p=>BILL.find(b=>b.k===(p.billing||''))||BILL[0];
+const isArchived=p=>p.status==='perso'||(p.status==='consegnato'&&p.billing==='pagato');
+function normRow(col,r){if(col==='productions'&&(r.status==='fatturato'||r.status==='pagato')){r.billing=r.billing||r.status;r.status='consegnato'}return r}
+const statusColor=k=>{const s=ST[k];if(!s)return'var(--mute)';if(s.ph===-1)return'var(--bad)';return PHASES[s.ph].c};
 
 /* ---------- utilità ---------- */
 const $=s=>document.querySelector(s);
@@ -715,7 +719,7 @@ function onErr(e){
   if(/JWT|session|401/i.test(m)){toast('Sessione scaduta: accedi di nuovo');showLogin();return}
   toast('Salvataggio non riuscito, riprova');console.error(e);
 }
-function upsertLocal(col,id,data){if(!S[col])return;const i=S[col].findIndex(x=>x.id===id);const row={id,...data};if(i>=0)S[col][i]=row;else S[col].push(row)}
+function upsertLocal(col,id,data){if(!S[col])return;const i=S[col].findIndex(x=>x.id===id);const row=normRow(col,{id,...data});if(i>=0)S[col][i]=row;else S[col].push(row)}
 async function saveDoc(col,id,data){
   if(!guard())return null;
   const now=new Date().toISOString();data.updatedAt=now;
@@ -761,7 +765,7 @@ addEventListener('hashchange',()=>{route();renderAll();scrollTo(0,0)});
 /* ---------- pezzi di UI ---------- */
 const pill=(k,kind)=>`<span class="pill" style="--c:${statusColor(k)}">${esc(stLabel(k,kind))}</span>`;
 function phaseBar(k){const s=ST[k];const ph=s?s.ph:-1;const c=statusColor(k);
-  return `<span class="ph" style="--c:${c}" aria-hidden="true">${[0,1,2,3].map(i=>`<i class="${(ph>=i||ph===4)?'on':''}"></i>`).join('')}</span>`}
+  return `<span class="ph" style="--c:${c}" aria-hidden="true">${[0,1,2,3].map(i=>`<i class="${ph>=i?'on':''}"></i>`).join('')}</span>`}
 const clientName=id=>{const c=byId(S.clients,id);return c?(c.company||c.name):''};
 function prodLabel(p){return p?p.title:''}
 
@@ -774,7 +778,7 @@ function prodRow(p){
     <div class="m"><div class="code"><span class="kt kt-${kd}">${KIND[kd].l}</span>${p.type?esc(p.type):''}</div>
       <div class="t">${esc(p.title)}</div>
       <div class="s">${cl?`<span>${esc(cl)}</span>`:''}${dates.map((d,i)=>`<span class="${late&&i===dates.length-1?'due late':''}">${esc(d)}</span>`).join('')}${eqWarn?`<span class="due late">Attrezzatura da ordinare</span>`:''}${p.equipPay==='dapagare'?`<span class="due late">Noleggio da pagare${p.equipCost?' · '+money(p.equipCost):''}</span>`:''}</div></div>
-    <div class="r"><span class="rtop">${crewDots(p.crew)}${pill(p.status,kindOf(p))}</span>${phaseBar(p.status)}${p.amount?`<span class="amt">${money(p.amount)}</span>`:''}</div></div>`;
+    <div class="r"><span class="rtop">${crewDots(p.crew)}${pill(p.status,kindOf(p))}</span>${phaseBar(p.status)}<span class="rbill">${p.billing?`<span class="bill" style="--c:${billOf(p).c}">${billOf(p).s}</span>`:''}${p.amount?`<span class="amt">${money(p.amount)}</span>`:''}</span></div></div>`;
 }
 function taskRow(t,showProd=true){
   const p=byId(S.productions,t.productionId);const today=todayISO();
@@ -831,13 +835,13 @@ function renderDash(){
     <a class="kpi ${lateT?'hot':''}" href="#attivita"><b>${lateT}</b><span>Attività scadute</span><em aria-hidden="true">→</em></a>`;
 
   $('#pipe').innerHTML=PHASES.map((ph,i)=>{
-    const ps=S.productions.filter(p=>ST[p.status]?.ph===i);
+    const ps=S.productions.filter(p=>ST[p.status]?.ph===i&&!isArchived(p));
     const nv=ps.filter(p=>kindOf(p)==='video').length,nf=ps.filter(p=>kindOf(p)==='foto').length,ng=ps.filter(p=>kindOf(p)==='grafica').length;
     return `<button type="button" data-list="ph${i}" style="--c:${ph.c}"><b>${ps.length}</b><span>${ph.l}</span><small>${nv} video · ${nf} foto · ${ng} grafica</small></button>`}).join('');
 
   const end=addDays(today,14),items=[];
   for(const p of S.productions){
-    if(['perso','pagato'].includes(p.status))continue;
+    if(isArchived(p))continue;
     if(p.shootDate&&p.shootDate>=today&&p.shootDate<=end)items.push({d:p.shootDate,k:KIND[kindOf(p)].shoot+' · '+KIND[kindOf(p)].l,c:'var(--accent)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,who:p.crew||[]});
     if(isAsap(p)&&ACTIVE.includes(p.status)){items.push({d:'0000',asap:1,k:'Consegna ASAP',c:'var(--bad)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,who:p.crew||[],late:1});}
     else if(p.deliveryDate&&p.deliveryDate<=end&&ACTIVE.includes(p.status))items.push({d:p.deliveryDate,k:p.deliveryDate<today?'Consegna in ritardo':'Consegna',c:p.deliveryDate<today?'var(--bad)':'var(--ok)',t:p.title,s:clientName(p.clientId),o:'productions:'+p.id,who:p.crew||[],late:p.deliveryDate<today});
@@ -869,9 +873,9 @@ function renderBudget(){
   const sum=a=>a.reduce((t,p)=>t+(+p.amount||0),0);
   const G=[
     {k:'off',l:'Preventivi aperti',d:'Richieste e preventivi inviati',f:p=>['richiesta','preventivo'].includes(p.status)},
-    {k:'work',l:'In lavorazione',d:'Confermati, in produzione o consegnati',f:p=>WORKING.includes(p.status)},
-    {k:'cash',l:'Fatturato da incassare',d:'Fattura inviata, pagamento in attesa',f:p=>p.status==='fatturato',hot:1},
-    {k:'paid',l:'Incassato',d:'Produzioni pagate',f:p=>p.status==='pagato'}];
+    {k:'work',l:'Da fatturare',d:'Lavori confermati non ancora fatturati',f:p=>WORKING.includes(p.status)&&!p.billing},
+    {k:'cash',l:'Fatturato da incassare',d:'Fattura inviata, pagamento in attesa',f:p=>p.billing==='fatturato'&&p.status!=='perso',hot:1},
+    {k:'paid',l:'Incassato',d:'Lavori pagati',f:p=>p.billing==='pagato'&&p.status!=='perso'}];
   const data=G.map(g=>({...g,ps:S.productions.filter(g.f).sort((a,b)=>(+b.amount||0)-(+a.amount||0))}));
   $('#bKpis').innerHTML=data.map(g=>`<div class="${g.hot&&g.ps.length?'warm':''}"><b class="mono">${CHF.format(sum(g.ps))}</b><span>${g.l} · ${g.ps.length}</span></div>`).join('');
   $('#bGroups').innerHTML=data.map(g=>`<div class="sec"><h2>${g.l} <span class="code">${CHF.format(sum(g.ps))}</span></h2><div class="box">${g.ps.length?g.ps.map(prodRow).join(''):`<div class="empty">${g.d}: nessuna.</div>`}</div></div>`).join('')
@@ -940,8 +944,8 @@ function renderProds(){
   if(pWho!=='all')ps=ps.filter(p=>(p.crew||[]).includes(pWho));
   const f=pFilter;
   if(f==='attive')ps=ps.filter(p=>ACTIVE.includes(p.status));
-  else if(f==='archivio')ps=ps.filter(p=>['pagato','perso'].includes(p.status));
-  else if(f.startsWith('ph'))ps=ps.filter(p=>ST[p.status]?.ph===+f.slice(2));
+  else if(f==='archivio')ps=ps.filter(isArchived);
+  else if(f.startsWith('ph'))ps=ps.filter(p=>ST[p.status]?.ph===+f.slice(2)&&!isArchived(p));
   const q=pQuery.trim().toLowerCase();
   if(q)ps=ps.filter(p=>[p.title,p.code,p.type,clientName(p.clientId),p.location].join(' ').toLowerCase().includes(q));
   const order=s=>STATUSES.findIndex(x=>x.k===s);
@@ -1114,8 +1118,9 @@ const SPEC={
     {type:'hd',l:'Lavoro'},
     {k:'title',l:'Titolo',req:1,span:4},{k:'kind',l:'Sezione',type:'kind',span:2},
     {k:'clientId',l:'Cliente',type:'client'},{k:'type',l:'Tipo',type:'ptype'},
-    {k:'status',l:'Stato',type:'status',span:2},{k:'amount',l:'Importo CHF',type:'number',span:2},{k:'shootDate',l:'Riprese / shooting',type:'date',span:2},
-    {k:'deliveryMode',l:'Consegna',type:'delivery'},{k:'location',l:'Location',type:'location',cls:'eq'},
+    {k:'status',l:'Stato lavoro',type:'status',span:2},{k:'billing',l:'Fatturazione',type:'billing',span:2},{k:'amount',l:'Importo CHF',type:'number',span:2},
+    {k:'shootDate',l:'Riprese / shooting',type:'date',span:3},
+    {k:'deliveryMode',l:'Consegna',type:'delivery'},{k:'location',l:'Location',type:'location',cls:'eq',span:6},
     {type:'hd',l:'Attrezzatura',cls:'eq',tab:'attrezzatura'},
     {k:'equip',l:'Stato',type:'equip',cls:'eq'},{k:'equipWhere',l:'Dettagli prenotazione',ph:'n. ordine, ritiro, riconsegna',cls:'eq'},
     {k:'equipPay',l:'Pagamento noleggio',type:'eqpay',cls:'eq'},{k:'equipCost',l:'Costo a nostro carico (CHF)',type:'number',cls:'eq eqcost'},
@@ -1178,6 +1183,7 @@ function roValue(f,v){
     case 'kind':return KIND[kindOf(v)].l;
     case 'client':return clientName(x);
     case 'status':return x?stLabel(x,kindOf(v)):'';
+    case 'billing':return billOf(v).l;
     case 'number':return x||x===0?(f.k==='amount'||f.k==='equipCost'?money(x):String(x)):'';
     case 'date':return x?fmtDW(x):'';
     case 'delivery':return isAsap(v)?'ASAP':(v.deliveryDate?fmtDW(v.deliveryDate):'');
@@ -1225,6 +1231,7 @@ function field(f,v){
   else if(f.type==='equip')inp=`<select id="${id}" name="${f.k}">${EQUIP.map(e=>`<option value="${e.k}" ${e.k===(v||'')?'selected':''}>${esc(e.l)}</option>`).join('')}</select>`;
   else if(f.type==='time')inp=`<select id="${id}" name="${f.k}"><option value="">--:--</option>${(v&&!TIMES.includes(v)?[v]:[]).concat(TIMES).map(t=>`<option ${t===v?'selected':''}>${t}</option>`).join('')}</select>`;
   else if(f.type==='who')inp=`<select id="${id}" name="${f.k}"><option value="">—</option>${['Matteo','Kia','Matteo / Kia'].concat(v&&!['Matteo','Kia','Matteo / Kia'].includes(v)?[v]:[]).map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  else if(f.type==='billing')inp=`<select id="${id}" name="${f.k}">${BILL.map(b=>`<option value="${b.k}" ${b.k===(v||'')?'selected':''}>${esc(b.l)}</option>`).join('')}</select>`;
   else if(f.type==='eqpay')inp=`<select id="${id}" name="${f.k}">${EQPAY.map(e=>`<option value="${e.k}" ${e.k===(v||'')?'selected':''}>${esc(e.l)}</option>`).join('')}</select>`;
   else if(f.type==='kind')inp=`<select id="${id}" name="${f.k}">${Object.entries(KIND).map(([k,o])=>`<option value="${k}" ${k===(v||'video')?'selected':''}>${o.l}</option>`).join('')}</select>`;
   else if(f.type==='ptype')inp=`<select id="${id}" name="${f.k}">${typeOpts(field._kind,v)}</select>`;
@@ -1245,7 +1252,7 @@ function field(f,v){
 }
 const LISTS={aperte:{l:'Produzioni aperte',f:p=>ACTIVE.includes(p.status)},
   ph0:{l:'Pre-produzione',f:p=>ST[p.status]?.ph===0},ph1:{l:'Produzione',f:p=>ST[p.status]?.ph===1},
-  ph2:{l:'Post-produzione',f:p=>ST[p.status]?.ph===2},ph3:{l:'Consegna',f:p=>ST[p.status]?.ph===3}};
+  ph2:{l:'Post-produzione',f:p=>ST[p.status]?.ph===2},ph3:{l:'Consegna',f:p=>ST[p.status]?.ph===3&&!isArchived(p)}};
 let listWho='all';
 const WHOF={all:p=>true,matteo:p=>(p.crew||[]).includes('matteo'),kia:p=>(p.crew||[]).includes('kia'),both:p=>(p.crew||[]).length===2};
 function listWhoBar(){
@@ -1589,7 +1596,7 @@ async function loadSamples(btn){
   const p1=await saveDoc('productions',null,{sample:true,kind:'video',code:`VD-${yy}-901`,title:'Spot lancio birra invernale',clientId:c1,type:'Spot / pubblicità',status:'riprese',amount:8500,shootDate:d(3),deliveryDate:d(18),location:'Birrificio, Maggia',notes:'2 giorni di riprese, drone sì.'});
   const p2=await saveDoc('productions',null,{sample:true,kind:'video',code:`VD-${yy}-902`,title:'Documentario mostra primavera',clientId:c2,type:'Documentario',status:'preventivo',amount:14000,shootDate:d(40),deliveryDate:d(75),location:'Lugano',notes:''});
   const p3=await saveDoc('productions',null,{sample:true,kind:'video',code:`VD-${yy}-903`,title:'Video matrimonio',clientId:c3,type:'Matrimonio',status:'montaggio',amount:3200,shootDate:d(-12),deliveryDate:d(9),location:'Castelgrande',notes:''});
-  await saveDoc('productions',null,{sample:true,kind:'foto',code:`FT-${yy}-901`,title:'Foto prodotto birra invernale',clientId:c1,type:'Social media content',status:'fatturato',amount:1800,shootDate:d(-30),deliveryDate:d(-14),location:'',notes:''});
+  await saveDoc('productions',null,{sample:true,kind:'foto',code:`FT-${yy}-901`,title:'Foto prodotto birra invernale',clientId:c1,type:'Social media content',status:'consegnato',billing:'fatturato',amount:1800,shootDate:d(-30),deliveryDate:d(-14),location:'',notes:''});
   const tasks=[['Confermare noleggio drone',p1,d(1),'Matteo'],['Sopralluogo location',p1,d(2),'Matteo'],['Inviare preventivo aggiornato',p2,d(-1),'Matteo'],['Selezione musiche',p3,d(4),'Sara'],['Primo montaggio da inviare',p3,d(7),'Sara'],['Sollecito pagamento reel',null,d(0),'Matteo']];
   for(const [title,pid,due,who] of tasks)await saveDoc('tasks',null,{sample:true,title,productionId:pid||'',due,assignee:who,done:false,doneAt:null,notes:''});
   toast('Esempi caricati');
@@ -1613,7 +1620,7 @@ function hideLogin(){$('#sblogin').hidden=true}
 async function loadAll(){
   const out={clients:[],productions:[],tasks:[],suppliers:[],events:[]};let from=0;
   for(;;){const {data,error}=await sb.from('docs').select('col,id,data').range(from,from+999);if(error)throw error;
-    for(const r of data)if(out[r.col])out[r.col].push({id:r.id,...r.data});if(data.length<1000)break;from+=1000}
+    for(const r of data)if(out[r.col])out[r.col].push(normRow(r.col,{id:r.id,...r.data}));if(data.length<1000)break;from+=1000}
   Object.assign(S,out);for(const k in S.ready)S.ready[k]=true;renderAll();
 }
 function subscribe(){
